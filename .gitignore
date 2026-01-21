@@ -1,2 +1,7 @@
 build/
 .cache/
+objs/
+out-debug/
+out-release/
+compile_flags.txt
+build.ninja
