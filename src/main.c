@@ -68,8 +68,9 @@ int main() {
             // render pass
             SDL_GPUColorTargetInfo color_target = {
                 .texture = swapchain_texture,
-                .load_op = SDL_GPU_LOADOP_DONT_CARE,
+                .load_op = SDL_GPU_LOADOP_CLEAR,
                 .store_op = SDL_GPU_STOREOP_STORE,
+                .clear_color = (SDL_FColor){ .r = 0.0f, .g = 0.4f, .b = 0.6, .a=1.0f },
             };
             SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(cmd, &color_target, 1, NULL);
             if (!render_pass) continue;
