@@ -5,7 +5,8 @@ m_dep = cc.find_library('m', required : true)
 sdl3_dep = dependency('sdl3', required: true)
 
 src = [
-  'src/main.c', 
+  'src/main.c',
+  'src/logger.c',
 ]
 
 incdir = include_directories('src')

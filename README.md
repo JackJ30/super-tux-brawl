@@ -1,6 +1,10 @@
 # Super Tux Brawl
 
-
+# Todo to get away from cstdlib
+- [ ] better named primitives
+- [ ] debug define
+- [ ] build script
+- [ ] strings and slices
 
 # Characters
 - Tux Linux
