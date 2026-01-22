@@ -5,11 +5,11 @@
 
 int main() {
 
-    if (platformInit() != 0) {
+    if (platform_init() != 0) {
         return 1;
     }
 
-    if (rendererInit(platform.window) != 0) {
+    if (renderer_init(platform.window) != 0) {
         return 1;
     }
 
@@ -27,12 +27,12 @@ int main() {
             }
         }
 
-        renderFrame(platform.window);
+        render_frame(platform.window);
     }
 
     // cleanup
-    rendererShutdown();
-    platformShutdown();
+    renderer_shutdown();
+    platform_shutdown();
 
     return 0;
 }

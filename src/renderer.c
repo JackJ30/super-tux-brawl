@@ -1,12 +1,13 @@
 #include "renderer.h"
+#include "gpu_pipeline.h"
 #include "logger.h"
 
 RendererState renderer;
 
-int rendererInit(SDL_Window* window) {
+int renderer_init(SDL_Window* window) {
 
     // set up gpu
-    renderer.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL, DEBUG, NULL);
+    renderer.gpu = SDL_CreateGPUDevice(get_availale_shader_formats(), DEBUG, NULL);
     if (renderer.gpu == NULL) {
 		log_err("Failed to create SDL GPU: %s", SDL_GetError());
         return 1;
@@ -30,11 +31,11 @@ int rendererInit(SDL_Window* window) {
     return 0;
 }
 
-void rendererShutdown() {
+void renderer_shutdown() {
     SDL_DestroyGPUDevice(renderer.gpu);
 }
 
-void renderFrame(SDL_Window* window) {
+void render_frame(SDL_Window* window) {
 
     // get render resources
     SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(renderer.gpu);

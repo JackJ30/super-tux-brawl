@@ -1,10 +1,10 @@
 # Super Tux Brawl
 
 # Todo to get away from cstdlib
-- [ ] better named primitives
-- [ ] debug define
+- [x] better named primitives
+- [x] debug define
+- [ ] arenas and temp arenas
 - [ ] build script
-- [ ] strings and slices
 
 # Characters
 - Tux Linux

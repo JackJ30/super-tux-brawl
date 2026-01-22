@@ -3,7 +3,7 @@
 
 PlatformState platform;
 
-int platformInit() {
+int platform_init() {
 	for (int i = 0; i < SDL_GetNumVideoDrivers(); ++i) {
 		if (strcmp(SDL_GetVideoDriver(i), "wayland") == 0) {
 			SDL_SetHintWithPriority(SDL_HINT_VIDEO_DRIVER, "wayland", SDL_HINT_OVERRIDE);
@@ -28,7 +28,7 @@ int platformInit() {
     return 0;
 }
 
-void platformShutdown() {
+void platform_shutdown() {
     SDL_DestroyWindow(platform.window);
     SDL_Quit();
 }

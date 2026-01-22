@@ -10,7 +10,7 @@ typedef struct {
 
 extern PlatformState platform;
 
-int platformInit();
-void platformShutdown();
+int platform_init();
+void platform_shutdown();
 
 #endif

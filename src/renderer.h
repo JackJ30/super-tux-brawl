@@ -9,9 +9,9 @@ typedef struct {
 
 extern RendererState renderer;
 
-int rendererInit(SDL_Window* window);
-void rendererShutdown();
+int renderer_init(SDL_Window* window);
+void renderer_shutdown();
 
-void renderFrame(SDL_Window* window);
+void render_frame(SDL_Window* window);
 
 #endif
