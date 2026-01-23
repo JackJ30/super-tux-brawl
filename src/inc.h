@@ -25,6 +25,14 @@ typedef size_t    usize;
 #define clamp(v, a, b) (min(max(a, v), b))
 #define countof(a)     (size)(sizeof(a) / sizeof(a[0]))
 
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
 // strings
 /* #define s8(s) (s8){(u8 *)s, lengthof(s) - 1} */
 /* typedef struct { */
