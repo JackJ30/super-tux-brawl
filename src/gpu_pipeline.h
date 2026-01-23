@@ -6,7 +6,7 @@
 #include "inc.h"
 
 SDL_GPUShaderFormat get_availale_shader_formats();
-SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragment_path, b32 blend);
+SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragment_path, b8 blend);
 void graphics_pipeline_destroy(SDL_GPUGraphicsPipeline*);
 
 #endif

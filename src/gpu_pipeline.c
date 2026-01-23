@@ -14,7 +14,7 @@ SDL_GPUShaderFormat get_availale_shader_formats() {
     return SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL;
 }
 
-SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragment_path, b32 blend) {
+SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragment_path, b8 blend) {
 
     // load shaders
     SDL_GPUShader* vertex = load_shader(vertex_path);

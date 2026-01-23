@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 
 #include "platform.h"
+#include "inc.h"
 #include "renderer.h"
 
 int main() {
@@ -14,7 +15,7 @@ int main() {
     }
 
     // main loop
-    bool running = true;
+    b8 running = true;
     while (running) {
         // poll events
         SDL_Event e;

@@ -29,6 +29,7 @@ done
 [ $installing -eq 1 ] && run_install
 
 CFLAGS=${CFLAGS:-""}
+LDFLAGS=${LDFLAGS:-""}
 
 if [ $release -eq 1 ]; then
     CFLAGS="$CFLAGS -O2 -DDEBUG=0"
@@ -44,12 +45,15 @@ write() {
     echo "$@" >> build.ninja
 }
 
-echo "$CFLAGS $(pkg-config --cflags $libs 2>/dev/null)" | tr ' ' '\n' > compile_flags.txt
+CFLAGS=$(echo "$CFLAGS $(pkg-config --cflags $libs 2>/dev/null)")
+LDFLAGS=$(echo "$LDFLAGS $(pkg-config --libs $libs 2>/dev/null)")
+echo $CFLAGS | tr ' ' '\n' > compile_flags.txt
+
 rm -f build.ninja
 
 write "builddir = $builddir"
-write "cflags = $CFLAGS $(pkg-config --cflags $libs 2>/dev/null)"
-write "libs = $(pkg-config --libs $libs 2>/dev/null)"
+write "cflags = $(echo $CFLAGS)"
+write "libs = $(echo $LDFLAGS)"
 
 write 'rule cc'
 write '  deps = gcc'
@@ -97,7 +101,9 @@ done
 
 write "build install: run_install"
 write "build $outputdir/$bin: link $(echo $o_files)"
-write "build all: phony $outputdir/$bin $(echo $spirv_files)"
+write "build $bin: phony $outputdir/$bin"
+write "build shaders: phony $(echo $spirv_files)"
+write "build all: phony $bin shaders"
 write "default all"
 
-echo "Wrote ./build.ninja file"
+echo "Wrote build.ninja file"
