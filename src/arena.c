@@ -1,5 +1,6 @@
 #include "arena.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +22,7 @@ void free_region(ArenaRegion *r) {
     free(r);
 }
 
-b8 arena_create(Arena *a, size_t default_region_size) {
+bool arena_create(Arena *a, size_t default_region_size) {
 	assert(a->first == NULL && a->current == NULL);
 
 	// create first region and set region size
@@ -213,7 +214,7 @@ void arena_rewind(ArenaMark m) {
 _Thread_local
 Arena scratch_pool[NUM_SCRATCH_ARENAS] = {0};
 _Thread_local
-b8 scratch_initialized = false;
+bool scratch_initialized = false;
 
 void init_scratch_pool(size_t region_size) {
 	for (size_t i = 0; i < NUM_SCRATCH_ARENAS; ++i) {
@@ -235,7 +236,7 @@ ArenaMark get_scratch_arena(Arena** conflicting, size_t num_conflicting) {
 	}
 
     for (int i = 0; i < NUM_SCRATCH_ARENAS; i++) {
-        b8 is_conflicting = false;
+        bool is_conflicting = false;
         for (size_t z = 0; z < num_conflicting; z++) {
             if (&scratch_pool[i] == conflicting[z]) {
                 is_conflicting = true;
@@ -255,6 +256,39 @@ void done_scratch_arena(ArenaMark mark) {
 	arena_rewind(mark);
 }
 
+
+// temp
+Arena* tmp;
+
+void init_tmp() {
+    // init tmp
+    tmp = calloc(1, sizeof(Arena));
+    arena_create(tmp, 1 * 1024 * 1024);
+}
+
+void shutdown_tmp() {
+    // destroy tmp
+    arena_destroy(tmp);
+    free(tmp);
+}
+
+void reset_tmp() {
+    arena_reset(tmp);
+}
+
+char* tprintf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    char *result = arena_vsprintf(tmp, format, args);
+    va_end(args);
+
+    return result;
+}
+
+void* talloc(size_t size, size_t align) {
+    return arena_alloc(tmp, size, align);
+}
+
 // debug
 void arena_debug_stats(Arena *a, size_t *allocated, size_t* used, size_t* wasted) {
 	assert(a->first != NULL && a->current != NULL);
@@ -263,7 +297,7 @@ void arena_debug_stats(Arena *a, size_t *allocated, size_t* used, size_t* wasted
 	if (used) *used = 0;
 	if (wasted) *wasted = 0;
 
-	b8 reached_current = false;
+	bool reached_current = false;
     ArenaRegion *r = a->first;
     while (r) {
 		if (r == a->current) reached_current = true;

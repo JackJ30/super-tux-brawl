@@ -1,18 +1,20 @@
 #ifndef _ARENA_H_
 #define _ARENA_H_
 
-#include "inc.h"
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct ArenaRegion ArenaRegion;
 struct ArenaRegion {
     ArenaRegion *next;
-	u8* ptr;
-	u8* end;
-    u8 data[];
+	uint8_t* ptr;
+	uint8_t* end;
+    uint8_t data[];
 };
 
-typedef struct {
+typedef struct Arena_ {
     ArenaRegion *first, *current;
 	size_t default_region_size;
 } Arena;
@@ -20,11 +22,11 @@ typedef struct {
 typedef struct  {
 	Arena* arena;
     ArenaRegion *region;
-	u8* ptr;
+	uint8_t* ptr;
 } ArenaMark;
 
 // base functions
-b8 arena_create(Arena *a, size_t default_region_size);
+bool arena_create(Arena *a, size_t default_region_size);
 void arena_destroy(Arena *a);
 
 // allocations
@@ -67,6 +69,14 @@ void deinit_scratch_pool();
          _once;															\
          _once = NULL, done_scratch_arena(_m))							\
         for (Arena *name = _m.arena; name; name = NULL)
+
+// temp
+void init_tmp();
+void shutdown_tmp();
+void reset_tmp();
+char* tprintf(const char* format, ...)
+	__attribute__((format(printf, 1, 2)));
+void* talloc(size_t size, size_t align);
 
 // debug
 void arena_debug_stats(Arena *a, size_t *allocated, size_t* used, size_t* wasted);

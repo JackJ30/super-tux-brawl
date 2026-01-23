@@ -9,7 +9,7 @@ char* get_resource_dir() {
 #endif
 }
 
-void load_resource_file(char* path, byte* out, size* size) {
+b8 load_resource_file(char* path, Arena* arena, byte* out, size* size) {
     // todo(jack): implement
     assert(false);
 }
