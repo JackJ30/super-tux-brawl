@@ -5,19 +5,16 @@
 #include <enet/enet.h>
 
 int main() {
-//    printf("%lu\n", sizeof(bool));
-//    char* argv[] = { "", NULL };
-//    execve("/bin/sh", argv, NULL);
     if (enet_initialize() != 0) {
         fprintf (stderr, "An error occurred while initializing ENet.\n");
         return 1;
     }
     ENetAddress address;
     ENetHost* server;
-    
+
     address.host = ENET_HOST_ANY;
     address.port = 8080;
-    
+
     server = enet_host_create(&address, 32, 2, 0, 0);
     if (!server) {
         fprintf(stderr, "host creation failed\n");
@@ -32,7 +29,7 @@ int main() {
     {
         switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
-                printf("A new client connected from %x:%u.\n", 
+                printf("A new client connected from %x:%u.\n",
                         event.peer->address.host,
                         event.peer->address.port);
 
