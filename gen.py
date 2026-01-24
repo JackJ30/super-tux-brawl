@@ -3,12 +3,6 @@
 import glob, sys, subprocess, os, platform
 sys.dont_write_bytecode = True
 
-shader_format="spv"
-match platform.system():
-    case "Windows":
-        shader_format = "dxil"
-    case "Darwin":
-        shader_format = "msl"
 
 binary="super-tux-brawl"
 libs="sdl3"
@@ -28,9 +22,21 @@ for arg in sys.argv[1:]:
     elif "--destdir" in arg:
         destdir = arg.split("=")[1]
 
-CFLAGS=os.getenv("CFLAGS", default="") + f' -std=c99 -DSHADER_FORMAT="{shader_format}"'
+CFLAGS=os.getenv("CFLAGS", default="") + f' -std=c99'
 LDFLAGS=os.getenv("LDFLAGS", default="")
 CC=os.getenv("CC", default="gcc")
+
+shader_format="spv"
+match platform.system():
+    case "Windows":
+        shader_format = "dxil"
+        CFLAGS += " -DSHADER_FORMAT_SPV -DSHADER_FORMAT_DXIL"
+    case "Darwin":
+        shader_format = "msl"
+        CFLAGS += " -DSHADER_FORMAT_MSL"
+    case _:
+        CFLAGS += " -DSHADER_FORMAT_SPV"
+
 
 if release:
     CFLAGS += " -O2 -DDEBUG=0"
