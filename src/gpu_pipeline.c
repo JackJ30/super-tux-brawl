@@ -8,6 +8,7 @@
 #include "cjson/cJSON.h"
 #include <string.h>
 
+// get bitfield of available shader formats (everything we can give SDL)
 SDL_GPUShaderFormat get_availale_shader_formats() {
 
     SDL_GPUShaderFormat format = 0;
@@ -38,7 +39,7 @@ SDL_GPUShader* load_shader(char* path) {
         goto err;
     }
 
-    // get format properties
+    // get format properties (picking a format that SDL wants us to give it)
     SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(renderer.gpu);
     char* format_name;
     char* format_entrypoint;
