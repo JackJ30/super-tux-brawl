@@ -97,7 +97,7 @@ SDL_GPUShader* load_shader(char* path) {
     // create shader
     SDL_GPUShader* shader = SDL_CreateGPUShader(renderer.gpu, &info);
     if (shader == NULL) {
-        log_err("Could not determine shader type for: %s", path);
+        log_err("Failed create GPU shader: %s, error: %s", path, SDL_GetError());
         goto err;
     }
 
@@ -114,12 +114,10 @@ SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragmen
     // load shaders
     SDL_GPUShader* vertex = load_shader(vertex_path);
     if (vertex == NULL) {
-        log_err("Failed to load vertex shader: %s", vertex_path);
         return NULL;
     }
     SDL_GPUShader* fragment = load_shader(fragment_path);
     if (fragment == NULL) {
-        log_err("Failed to load fragment shader: %s", fragment_path);
         return NULL;
     }
 
