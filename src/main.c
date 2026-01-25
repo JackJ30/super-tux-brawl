@@ -19,7 +19,7 @@ int main() {
     }
 
     // main loop
-    Camera camera = { .scale = 3.0f, .aspect=1.0f };
+    Camera camera = { .scale = 3.0f, .aspect=((float)platform.width / (float)platform.height) };
     b8 running = true;
     while (running) {
         // poll event
@@ -52,7 +52,9 @@ int main() {
                  //     }
                  // }
                 case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-                    camera.aspect = (float)e.window.data1 / (float)e.window.data2;
+                    platform.width = e.window.data1;
+                    platform.height = e.window.data2;
+                    camera.aspect = (float)platform.width / (float)platform.height;
                 }
             }
         }
