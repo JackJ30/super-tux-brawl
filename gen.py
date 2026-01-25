@@ -22,7 +22,7 @@ for arg in sys.argv[1:]:
     elif "--destdir" in arg:
         destdir = arg.split("=")[1]
 
-CFLAGS=os.getenv("CFLAGS", default="") + f' -std=c99 -Isrc/deps/'
+CFLAGS=os.getenv("CFLAGS", default="") + f' -std=c11 -Isrc/deps/'
 LDFLAGS=os.getenv("LDFLAGS", default="")
 CC=os.getenv("CC", default="gcc")
 
