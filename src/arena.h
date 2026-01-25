@@ -58,25 +58,10 @@ void arena_rewind(ArenaMark m);
 #define DEFAULT_SCRATCH_REGION_SIZE 4096
 #endif
 ArenaMark get_scratch_arena(Arena** conflicting, size_t num_conflicting);
-void done_scratch_arena(ArenaMark mark);
+void release_scratch_arena(ArenaMark mark);
 // scratch pool
 void init_scratch_pool(size_t region_size); // if you want to explicitly init
 void deinit_scratch_pool();
-
-#define arena_temp_scratch(name, conflicting, num_conflicting)			\
-    for (ArenaMark _m = get_scratch_arena(conflicting, num_conflicting),\
-			 *_once = (ArenaMark*)1;									\
-         _once;															\
-         _once = NULL, done_scratch_arena(_m))							\
-        for (Arena *name = _m.arena; name; name = NULL)
-
-// temp
-void init_tmp();
-void shutdown_tmp();
-void reset_tmp();
-char* tprintf(const char* format, ...)
-	__attribute__((format(printf, 1, 2)));
-void* talloc(size_t size, size_t align);
 
 // debug
 void arena_debug_stats(Arena *a, size_t *allocated, size_t* used, size_t* wasted);

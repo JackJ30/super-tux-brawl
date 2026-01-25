@@ -5,6 +5,7 @@
 
 typedef struct {
     SDL_GPUDevice* gpu;
+    SDL_GPUGraphicsPipeline* pipeline;
 } RendererState;
 
 extern RendererState renderer;

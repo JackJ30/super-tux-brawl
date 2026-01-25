@@ -3,22 +3,124 @@
 #include "logger.h"
 #include "platform.h"
 #include "renderer.h"
+#include "resource_loader.h"
 
-SDL_GPUShader* load_shader(char* path) {
-    // todo(jack): implement
-    assert(false);
-}
+#include "cjson/cJSON.h"
+#include <string.h>
 
 SDL_GPUShaderFormat get_availale_shader_formats() {
-    // todo(jack&riley): make this use a manifest or define
-    return SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL;
+
+    SDL_GPUShaderFormat format = 0;
+
+#ifdef SHADER_FORMAT_SPV
+    format |= SDL_GPU_SHADERFORMAT_SPIRV;
+#endif
+#ifdef SHADER_FORMAT_MSL
+    format |= SDL_GPU_SHADERFORMAT_MSL;
+#endif
+#ifdef SHADER_FORMAT_DXIL
+    format |= SDL_GPU_SHADERFORMAT_DXIL;
+#endif
+
+    return format;
+}
+
+SDL_GPUShader* load_shader(char* path) {
+    // get tmp
+    ArenaMark s = get_scratch_arena(NULL, 0);
+
+    // get shader stage
+    SDL_GPUShaderStage stage;
+    if (strstr(path, "vert") != NULL) stage = SDL_GPU_SHADERSTAGE_VERTEX;
+    else if (strstr(path, "frag") != NULL) stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
+    else {
+        log_err("Could not determine shader type for: %s", path);
+        goto err;
+    }
+
+    // get format properties
+    SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(renderer.gpu);
+    char* format_name;
+    char* format_entrypoint;
+    switch (format) {
+        case SDL_GPU_SHADERFORMAT_SPIRV:
+            format_name = "spv";
+            format_entrypoint = "main";
+            break;
+        case SDL_GPU_SHADERFORMAT_DXIL:
+            format_name = "dxil";
+            format_entrypoint = "main";
+            break;
+        case SDL_GPU_SHADERFORMAT_MSL:
+            format_name = "msl";
+            format_entrypoint = "main0";
+            break;
+    }
+
+    // load shader code
+    byte* shader_code = NULL;
+    size shader_code_size;
+    if (!load_resource_file(tprintf("shaders/%s.%s", path, format_name), s.arena, &shader_code, &shader_code_size)) {
+        goto err;
+    }
+
+    // load reflection metadata
+    byte* metadata = NULL;
+    size metadata_size;
+    load_resource_file(tprintf("shaders/%s.json", path), s.arena, &metadata, &metadata_size);
+    cJSON* metadata_json = cJSON_ParseWithLength((char*)metadata, metadata_size);
+    if (metadata_json == NULL) {
+        log_err("Could not parse shader metadata for: %s", path);
+        cJSON_Delete(metadata_json);
+        goto err;
+    }
+    u32 num_samplers = cJSON_GetObjectItemCaseSensitive(metadata_json, "samplers")->valueint;
+    u32 num_uniform_buffers = cJSON_GetObjectItemCaseSensitive(metadata_json, "uniform_buffers")->valueint;
+    u32 num_storage_buffers = cJSON_GetObjectItemCaseSensitive(metadata_json, "storage_buffers")->valueint;
+    u32 num_storage_textures = cJSON_GetObjectItemCaseSensitive(metadata_json, "storage_textures")->valueint;
+    cJSON_Delete(metadata_json);
+
+    // create shader
+    SDL_GPUShaderCreateInfo info = {
+        .code = (Uint8*)shader_code,
+        .code_size = shader_code_size,
+        .entrypoint = format_entrypoint,
+        .format = format,
+        .stage = stage,
+        .num_samplers = num_samplers,
+        .num_uniform_buffers = num_uniform_buffers,
+        .num_storage_buffers = num_storage_buffers,
+        .num_storage_textures = num_storage_textures,
+    };
+
+    // create shader
+    SDL_GPUShader* shader = SDL_CreateGPUShader(renderer.gpu, &info);
+    if (shader == NULL) {
+        log_err("Could not determine shader type for: %s", path);
+        goto err;
+    }
+
+    release_scratch_arena(s);
+    return shader;
+
+err:
+    release_scratch_arena(s);
+    return NULL;
 }
 
 SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragment_path, b8 blend) {
 
     // load shaders
     SDL_GPUShader* vertex = load_shader(vertex_path);
+    if (vertex == NULL) {
+        log_err("Failed to load vertex shader: %s", vertex_path);
+        return NULL;
+    }
     SDL_GPUShader* fragment = load_shader(fragment_path);
+    if (fragment == NULL) {
+        log_err("Failed to load fragment shader: %s", fragment_path);
+        return NULL;
+    }
 
     // create pipeline
     SDL_GPUGraphicsPipelineCreateInfo info = {

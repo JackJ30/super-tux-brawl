@@ -2,7 +2,7 @@
 #include "gpu_pipeline.h"
 #include "logger.h"
 
-RendererState renderer;
+RendererState renderer = {0};
 
 int renderer_init(SDL_Window* window) {
 
@@ -28,10 +28,14 @@ int renderer_init(SDL_Window* window) {
         return 1;
     }
 
+    // init pipeline
+    renderer.pipeline = graphics_pipeline_load("fullscreen_world.vert", "blue.frag", false);
+
     return 0;
 }
 
 void renderer_shutdown() {
+    graphics_pipeline_destroy(renderer.pipeline);
     SDL_DestroyGPUDevice(renderer.gpu);
 }
 
@@ -62,6 +66,8 @@ void render_frame(SDL_Window* window) {
         if (!render_pass) return;
 
         // render
+        SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
+        SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
 
         // end render pass
         SDL_EndGPURenderPass(render_pass);

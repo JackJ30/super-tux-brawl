@@ -33,6 +33,14 @@ typedef size_t    usize;
 #define false 0
 #endif
 
+// temp allocation
+void init_tmp();
+void shutdown_tmp();
+void reset_tmp();
+char* tprintf(const char* format, ...)
+	__attribute__((format(printf, 1, 2)));
+void* talloc(size_t size, size_t align);
+
 // strings
 /* #define s8(s) (s8){(u8 *)s, lengthof(s) - 1} */
 /* typedef struct { */

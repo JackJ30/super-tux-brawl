@@ -61,7 +61,6 @@ b8 load_resource_file(char* resource, Arena* arena, byte** data, size* size) {
         goto err;
 	}
 
-end:
 	// clean up
 	fclose(file);
 	return true;
