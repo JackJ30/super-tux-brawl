@@ -67,6 +67,7 @@ with open("compile_flags.txt", "wb") as f:
 # write build.ninja
 with open("build.ninja", "wb") as f:
     # config
+    writeln(f, f"builddir = {builddir}")
     writeln(f, f"cflags = {CFLAGS.strip()}")
     writeln(f, f"libs = {LDFLAGS.strip()}")
 
