@@ -1,28 +1,13 @@
 #include <stddef.h>
 #include <stdatomic.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdalign.h>
 
-/* #define SLOTS 10 */
-/* #define SLOT sizeof(int) */
 #define NUM_SLOTS(x) (sizeof(x.slots) / sizeof(x.slots[0]))
 
-/* #define CACHE_LINE 64 */
+#define CACHE_LINE 64
 #define HEAD(q) atomic_load_explicit(&(q)->head, memory_order_acquire)
 #define TAIL(q) atomic_load_explicit(&(q)->tail, memory_order_acquire)
-
-/* typedef struct { */
-/*     alignas(CACHE_LINE) */
-/*         _Atomic size_t turn; */
-/*     unsigned char data[SLOT]; */
-/* } slot_t; */
-
-/* typedef struct { */
-/*     alignas(CACHE_LINE) _Atomic size_t head; */
-/*     alignas(CACHE_LINE) _Atomic size_t tail; */
-/*     alignas(CACHE_LINE) slot_t slots[SLOTS]; */
-/* } queue_t; */
 
 #define QUEUE(type, num_slots) struct {             \
         alignas(CACHE_LINE) _Atomic size_t head;    \
@@ -33,33 +18,17 @@
         } slots[num_slots];                         \
     }
 
-/* static inline void enqueue(queue_t *queue, const void *item) { */
-/*     size_t head = atomic_fetch_add_explicit(&queue->head, 1, memory_order_acq_rel); */
-/*     slot_t *slot = &queue->slots[head % SLOTS]; */
-/*     while ((head / SLOTS) * 2 != atomic_load_explicit(&slot->turn, memory_order_acquire)) { /\* busy-wait *\/ } */
-/*     memcpy(slot->data, item, SLOT); */
-/*     atomic_store_explicit(&slot->turn, (head / SLOTS) * 2 + 1, memory_order_release); */
-/* } */
-
 #define enqueue(queue, item) do {                                       \
-        size_t head = atomic_fetch_add_explicit(&queue->head, 1, memory_order_acq_rel); \
+        size_t head = atomic_fetch_add_explicit(&(queue.head), 1, memory_order_acq_rel); \
         while ((head / NUM_SLOTS(queue)) * 2 != atomic_load_explicit(&(queue.slots[head % NUM_SLOTS(queue)].turn), memory_order_acquire)) { /* busy-wait */ } \
         queue.slots[head % NUM_SLOTS(queue)].data = item;               \
         atomic_store_explicit(&(queue.slots[head % NUM_SLOTS(queue)].turn), (head / NUM_SLOTS(queue)) * 2 + 1, memory_order_release); \
     } while(0)
 
-/* static inline void dequeue(queue_t *queue, void *item) { */
-/*     size_t tail = atomic_fetch_add_explicit(&queue->tail, 1, memory_order_acq_rel); */
-/*     slot_t *slot = &queue->slots[tail % SLOTS]; */
-/*     while ((tail / SLOTS) * 2 + 1 != atomic_load_explicit(&slot->turn, memory_order_acquire)) { /\* busy-wait *\/ } */
-/*     memcpy(item, slot->data, SLOT); */
-/*     atomic_store_explicit(&slot->turn, (tail / SLOTS) * 2 + 2, memory_order_release); */
-/* } */
-
 #define dequeue(queue, item) do {                                       \
         size_t tail = atomic_fetch_add_explicit(&(queue.tail), 1, memory_order_acq_rel); \
         while ((tail / NUM_SLOTS(queue)) * 2 + 1 != atomic_load_explicit(&(queue.slots[tail % NUM_SLOTS(queue)].turn), memory_order_acquire)) { /* busy-wait */ } \
-        queue.slots[tail % NUM_SLOTS(queue)].data = item;               \
+        item = queue.slots[tail % NUM_SLOTS(queue)].data;               \
         atomic_store_explicit(&(queue.slots[tail % NUM_SLOTS(queue)].turn), (tail / NUM_SLOTS(queue)) * 2 + 2, memory_order_release); \
     } while(0)
 
