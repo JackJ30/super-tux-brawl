@@ -9,6 +9,7 @@
 int main() {
 
     init_tmp();
+    network_init();
 
     if (platform_init() != 0) {
         return 1;
@@ -70,6 +71,7 @@ int main() {
 
     // cleanup
     world_shutdown();
+    network_uninit();
     renderer_shutdown();
     platform_shutdown();
     shutdown_tmp();
