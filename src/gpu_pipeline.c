@@ -43,12 +43,15 @@ SDL_GPUShader* load_shader(char* path) {
     char* format_name;
     char* format_entrypoint;
     if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
+        format = SDL_GPU_SHADERFORMAT_SPIRV;
         format_name = "spv";
         format_entrypoint = "main";
     } else if (format & SDL_GPU_SHADERFORMAT_DXIL) {
+        format = SDL_GPU_SHADERFORMAT_DXIL;
         format_name = "dxil";
         format_entrypoint = "main";
     } else if (format & SDL_GPU_SHADERFORMAT_MSL) {
+        format = SDL_GPU_SHADERFORMAT_MSL;
         format_name = "msl";
         format_entrypoint = "main0";
     } else {
