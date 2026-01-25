@@ -42,19 +42,18 @@ SDL_GPUShader* load_shader(char* path) {
     SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(renderer.gpu);
     char* format_name;
     char* format_entrypoint;
-    switch (format) {
-        case SDL_GPU_SHADERFORMAT_SPIRV:
-            format_name = "spv";
-            format_entrypoint = "main";
-            break;
-        case SDL_GPU_SHADERFORMAT_DXIL:
-            format_name = "dxil";
-            format_entrypoint = "main";
-            break;
-        case SDL_GPU_SHADERFORMAT_MSL:
-            format_name = "msl";
-            format_entrypoint = "main0";
-            break;
+    if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
+        format_name = "spv";
+        format_entrypoint = "main";
+    } else if (format & SDL_GPU_SHADERFORMAT_DXIL) {
+        format_name = "dxil";
+        format_entrypoint = "main";
+    } else if (format & SDL_GPU_SHADERFORMAT_MSL) {
+        format_name = "msl";
+        format_entrypoint = "main0";
+    } else {
+        log_err("Shader format (%d) fucked sdl for shader: %s", format, path);
+        goto err;
     }
 
     // load shader code
@@ -67,7 +66,9 @@ SDL_GPUShader* load_shader(char* path) {
     // load reflection metadata
     byte* metadata = NULL;
     size metadata_size;
-    load_resource_file(tprintf("shaders/%s.json", path), s.arena, &metadata, &metadata_size);
+    if (!load_resource_file(tprintf("shaders/%s.json", path), s.arena, &metadata, &metadata_size)) {
+        goto err;
+    }
     cJSON* metadata_json = cJSON_ParseWithLength((char*)metadata, metadata_size);
     if (metadata_json == NULL) {
         log_err("Could not parse shader metadata for: %s", path);
