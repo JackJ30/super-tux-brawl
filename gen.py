@@ -3,15 +3,15 @@
 import glob, sys, subprocess, os, platform
 sys.dont_write_bytecode = True
 
-
 binary="super-tux-brawl"
 libs="sdl3 libenet"
 release = False
 builddir = "objs"
 prefix = "/usr"
 destdir = ""
-outputdir=""
+outputdir = ""
 
+# get user config
 for arg in sys.argv[1:]:
     if "--release" == arg:
         release = True
@@ -26,6 +26,7 @@ CFLAGS=os.getenv("CFLAGS", default="") + f' -std=c99 -Isrc/deps/'
 LDFLAGS=os.getenv("LDFLAGS", default="")
 CC=os.getenv("CC", default="gcc")
 
+# add our config
 shader_format="spv"
 match platform.system():
     case "Windows":
@@ -33,10 +34,9 @@ match platform.system():
         CFLAGS += " -DSHADER_FORMAT_SPV -DSHADER_FORMAT_DXIL"
     case "Darwin":
         shader_format = "msl"
-        CFLAGS += " -DSHADER_FORMAT_MSL"
+        CFLAGS += " -DSHADER_FORMAT_SPV -DSHADER_FORMAT_MSL"
     case _:
         CFLAGS += " -DSHADER_FORMAT_SPV"
-
 
 if release:
     CFLAGS += " -O2 -DDEBUG=0"
@@ -47,18 +47,13 @@ else:
     builddir += "/debug"
     outputdir = "out-debug"
 
+# pkg-config
 LDFLAGS += " " + subprocess.run(f"pkg-config --libs {libs}".split(" "), capture_output=True).stdout.strip().decode()
 CFLAGS += " " + subprocess.run(f"pkg-config --cflags {libs}".split(" "), capture_output=True).stdout.strip().decode()
 
 # get files
 c_files = glob.glob("src/**/*.c", recursive=True)
-all_o_files = " ".join([x.replace("src", builddir).replace(".c", ".o") for x in c_files])
 shader_files = glob.glob("src/**/*.glsl", recursive=True)
-all_spv_files = " ".join([x.replace("src", outputdir).replace(".glsl", ".spv") for x in shader_files])
-all_json_shader_files = " ".join([x.replace("src", outputdir).replace(".glsl", ".json") for x in shader_files])
-all_system_shader_files = ""
-if shader_format != "spv":
-    all_system_shader_files = " ".join([x.replace("src", outputdir).replace(".glsl", f".{shader_format}") for x in shader_files])
 
 def writeln(file, string):
     file.write(string.encode() + b"\n")
@@ -71,10 +66,11 @@ with open("compile_flags.txt", "wb") as f:
 
 # write build.ninja
 with open("build.ninja", "wb") as f:
-    writeln(f, f"builddir = {builddir}")
+    # config
     writeln(f, f"cflags = {CFLAGS.strip()}")
     writeln(f, f"libs = {LDFLAGS.strip()}")
 
+    # rules
     writeln(f, f'rule cc')
     writeln(f, f'  deps = gcc')
     writeln(f, f'  depfile = $out.d')
@@ -101,23 +97,37 @@ with open("build.ninja", "wb") as f:
     writeln(f, f'  description = SHADERCROSS $out')
     writeln(f, f'  command = shadercross $in -o $out')
 
+    # build c files
+    all_o_files = []
     for file in c_files:
         ofile = file.replace("src", builddir).replace(".c", ".o")
+        all_o_files.append(ofile)
         writeln(f, f"build {ofile}: cc {file}")
 
+    # compile shader files
+    all_shader_outs = []
     for file in shader_files:
+        # spirv
         spirv_ofile = file.replace("src", outputdir).replace(".glsl", ".spv")
-        system_ofile = file.replace("src", outputdir).replace(".glsl", f".{shader_format}")
-        json_ofile = file.replace("src", outputdir).replace(".glsl", f".json")
+        all_shader_outs.append(spirv_ofile)
         stage = file.split(".")[-2]
         writeln(f, f"build {spirv_ofile}: glslc_{stage} {file}")
-        if shader_format != "spv":
-            writeln(f, f"build {system_ofile}: shadercross {spirv_ofile}")
+
+        # json
+        json_ofile = file.replace("src", outputdir).replace(".glsl", f".json")
+        all_shader_outs.append(json_ofile)
         writeln(f, f"build {json_ofile}: shadercross {spirv_ofile}")
 
-    writeln(f, f"build {outputdir}/{binary}: link {all_o_files}")
+        # system format
+        if shader_format != "spv":
+            system_ofile = file.replace("src", outputdir).replace(".glsl", f".{shader_format}")
+            all_shader_outs.append(system_ofile)
+            writeln(f, f"build {system_ofile}: shadercross {spirv_ofile}")
+
+    # targets
+    writeln(f, f"build {outputdir}/{binary}: link {" ".join(all_o_files)}")
     writeln(f, f"build {binary}: phony {outputdir}/{binary}")
-    writeln(f, f"build shaders: phony {all_spv_files} {all_json_shader_files} {all_system_shader_files}")
+    writeln(f, f"build shaders: phony {" ".join(all_shader_outs)}")
     writeln(f, f"build all: phony {binary} shaders")
     writeln(f, f"default all")
 
