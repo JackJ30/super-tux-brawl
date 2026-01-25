@@ -5,7 +5,7 @@ sys.dont_write_bytecode = True
 
 
 binary="super-tux-brawl"
-libs="sdl3"
+libs="sdl3 libenet"
 release = False
 builddir = "objs"
 prefix = "/usr"

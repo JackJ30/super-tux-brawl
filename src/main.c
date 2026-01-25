@@ -4,10 +4,12 @@
 #include "platform.h"
 #include "inc.h"
 #include "renderer.h"
+#include "network.h"
 
 int main() {
 
     init_tmp();
+    network_init();
 
     if (platform_init() != 0) {
         return 1;
@@ -38,6 +40,7 @@ int main() {
     }
 
     // cleanup
+    network_uninit();
     renderer_shutdown();
     platform_shutdown();
     shutdown_tmp();
