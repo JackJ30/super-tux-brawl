@@ -1,15 +1,18 @@
 # Super Tux Brawl
 
-# Todo to get away from cstdlib
-- [x] better named primitives
-- [x] debug define
-- [ ] arenas and temp arenas
-- [ ] build script
+# The networking plan
+- https://gafferongames.com/categories/networked-physics/
+- https://www.gabrielgambetta.com/client-server-game-architecture.html
+- https://pvigier.github.io/2019/09/08/beginner-guide-game-networking.html
+- https://ruoyusun.com/2019/03/28/game-networking-1.html
+- https://medium.com/@qingweilim/how-do-multiplayer-games-sync-their-state-part-1-ab72d6a54043
+- https://web.archive.org/web/20190519135537/http://trac.bookofhook.com/bookofhook/trac.cgi/wiki/IntroductionToMultiplayerGameProgramming
 
 # Characters
 - Tux Linux
 - Beastie BSD
-- GNU Wildebeest
+- GNU
+- Firefox
 - Wilber GIMP
 - Python Snake
 - Larry the Cow Gentoo

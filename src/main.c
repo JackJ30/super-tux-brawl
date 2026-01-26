@@ -18,6 +18,8 @@ int main() {
         return 1;
     }
 
+    world_init();
+
     // main loop
     Camera camera = { .scale = 3.0f, .aspect=((float)platform.width / (float)platform.height) };
     b8 running = true;
@@ -59,13 +61,15 @@ int main() {
             }
         }
 
-        render_frame(platform.window, &camera);
+        State* new_state = world_sim(0.01f);
+        render_frame(platform.window, &camera, new_state);
 
         // clear arena
         reset_tmp();
     }
 
     // cleanup
+    world_shutdown();
     renderer_shutdown();
     platform_shutdown();
     shutdown_tmp();
