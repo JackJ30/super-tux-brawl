@@ -1,7 +1,7 @@
 #include <string.h>
 #include "da.h"
 
-array_info* array_create_(size_t item_size, size_t size, Arena* arena) {
+da_info* da_create_(size_t item_size, size_t size, Arena* arena) {
 	// find capacity
 	size_t cap = 8;
 	if (size > cap) {
@@ -17,13 +17,13 @@ array_info* array_create_(size_t item_size, size_t size, Arena* arena) {
 		cap++;
 	}
 
-	// make array
-    array_info* info;
+	// make da
+    da_info* info;
     if (arena) {
-        info = arena_alloc_zero(arena, sizeof(array_info) + item_size * cap, _Alignof(array_info));
+        info = arena_alloc_zero(arena, sizeof(da_info) + item_size * cap, _Alignof(da_info));
     }
     else {
-        info = calloc(1, sizeof(array_info) + item_size * cap);
+        info = calloc(1, sizeof(da_info) + item_size * cap);
     }
 	info->size = size;
 	info->arena = arena;
@@ -31,13 +31,13 @@ array_info* array_create_(size_t item_size, size_t size, Arena* arena) {
 	return info;
 }
 
-void* array_resize_(void* array, size_t item_size, size_t size) {
-	array_info* info = NULL;
-	if (!array) {
-		info = array_create_(item_size, 0, NULL);
+void* da_resize_(void* da, size_t item_size, size_t size) {
+	da_info* info = NULL;
+	if (!da) {
+		info = da_create_(item_size, 0, NULL);
 	}
 	else {
-		info = ((array_info*)array) - 1;
+		info = ((da_info*)da) - 1;
 	}
 	if (size == -1) {
 		info->size++;
@@ -56,28 +56,28 @@ void* array_resize_(void* array, size_t item_size, size_t size) {
 		info->capacity |= info->capacity >> 16;
 		info->capacity++;
         if (info->arena) {
-            info = arena_realloc(info->arena, info, oldsz, sizeof(array_info) + (info->capacity * item_size), _Alignof(array_info));
+            info = arena_realloc(info->arena, info, oldsz, sizeof(da_info) + (info->capacity * item_size), _Alignof(da_info));
         }
         else {
-            info = realloc(info, sizeof(array_info) + (info->capacity * item_size));
+            info = realloc(info, sizeof(da_info) + (info->capacity * item_size));
         }
 	}
-	return info->array;
+	return info->da;
 }
 
-void array_print(void* array) {
-	array_info* info = &((array_info*)array)[-1];
+void da_print(void* da) {
+	da_info* info = &((da_info*)da)[-1];
 	fprintf(stderr,
             "size: %lu\n"
             "capacity: %lu\n"
-            "array: %p\n",
+            "da: %p\n",
             info->size,
             info->capacity,
-            info->array);
+            info->da);
 }
 
-void array_pop(void* array) {
-	array_info* info = &((array_info*)array)[-1];
+void da_pop(void* da) {
+	da_info* info = &((da_info*)da)[-1];
 	if (info->size)
 		info->size--;
 }

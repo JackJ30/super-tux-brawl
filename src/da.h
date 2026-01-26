@@ -7,93 +7,95 @@
 
 #include "arena.h"
 
+#define DA(type) type *
+
 typedef struct {
 	size_t size;
 	size_t capacity;
     Arena* arena;
-	char array[];
-} array_info;
+	char da[];
+} da_info;
 
-array_info* array_create_(size_t item_size, size_t size, Arena* arena);
-void array_print(void* array);
-void array_pop(void* array);
-void* array_resize_(void* array, size_t item_size, size_t size);
+da_info* da_create_(size_t item_size, size_t size, Arena* arena);
+void da_print(void* da);
+void da_pop(void* da);
+void* da_resize_(void* da, size_t item_size, size_t size);
 
 #define CONCAT_INNER(a, b) a ## b
 #define CONCAT(a, b) CONCAT_INNER(a, b)
 
-#define array_clear(array) (((array_info*)(array))[-1].size = 0)
-#define array_size(array) (((array_info*)(array))[-1].size)
-#define array_create(type, size) ((type*)(array_create_(sizeof(type), size, NULL)->array))
-#define arena_array_create(arena, type, size) ((type*)(array_create_(sizeof(type), size, arena)->array))
+#define da_clear(da) (((da_info*)(da))[-1].size = 0)
+#define da_size(da) (((da_info*)(da))[-1].size)
+#define da_create(type, size) ((type*)(da_create_(sizeof(type), size, NULL)->da))
+#define arena_da_create(arena, type, size) ((type*)(da_create_(sizeof(type), size, arena)->da))
 
-#define array_destroy(array) do {                           \
-        array_info* info = &(((array_info*)(array))[-1]);   \
-        if (!info->arena) free(((array_info*)(array)) - 1); \
-        (array) = NULL;                                     \
+#define da_destroy(da) do {                             \
+        da_info* info = &(((da_info*)(da))[-1]);        \
+        if (!info->arena) free(((da_info*)(da)) - 1);   \
+        (da) = NULL;                                    \
     } while (0)
 
-#define array_erase(array, index) do {                                  \
-        for (int __i = (index); __i < array_size((array)) - 1; __i++)   \
-            (array)[__i] = (array)[__i + 1];                            \
-        ((array_info*)(array))[-1].size--;                              \
+#define da_erase(da, index) do {                                \
+        for (int __i = (index); __i < da_size((da)) - 1; __i++) \
+            (da)[__i] = (da)[__i + 1];                          \
+        ((da_info*)(da))[-1].size--;                            \
     } while(0)
 
-#define array_erase_range(array, startinc, endinc) do {                 \
-        for (int __i = (startinc); __i < array_size((array)) - ((endinc) - (startinc) + 1); __i++) \
-            (array)[__i] = (array)[__i + ((endinc) - (startinc) + 1)];  \
-        ((array_info*)(array))[-1].size -= ((endinc) - (startinc) + 1); \
+#define da_erase_range(da, startinc, endinc) do {                       \
+        for (int __i = (startinc); __i < da_size((da)) - ((endinc) - (startinc) + 1); __i++) \
+            (da)[__i] = (da)[__i + ((endinc) - (startinc) + 1)];        \
+        ((da_info*)(da))[-1].size -= ((endinc) - (startinc) + 1);       \
     } while(0)
 
-#define array_insert(array, index, value) do {                          \
+#define da_insert(da, index, value) do {                                \
         size_t __idx = (index);                                         \
-        void* __temp = array_resize_((array), sizeof(*(array)), array_size(array) + 1); \
-        (array) = __temp;                                               \
-        for (int __i = array_size((array)) - 1; __i > (__idx); __i--)   \
-            (array)[__i] = (array)[__i - 1];                            \
-        (array)[(__idx)] = value;                                       \
+        void* __temp = da_resize_((da), sizeof(*(da)), da_size(da) + 1); \
+        (da) = __temp;                                                  \
+        for (int __i = da_size((da)) - 1; __i > (__idx); __i--)         \
+            (da)[__i] = (da)[__i - 1];                                  \
+        (da)[(__idx)] = value;                                          \
     } while(0)
 
-#define array_insert_many(array, index, values, len) do {               \
+#define da_insert_many(da, index, values, len) do {                     \
         size_t __idx = (index);                                         \
-        void* __temp = array_resize_((array), sizeof(*(array)), array_size(array) + len); \
-        (array) = __temp;                                               \
-        for (int __i = array_size((array)) - 1; __i > (__idx) + len - 1; __i--) \
-            (array)[__i] = (array)[__i - len];                          \
-        memcpy(&array[(__idx)], (values), len * sizeof(*(array)));      \
+        void* __temp = da_resize_((da), sizeof(*(da)), da_size(da) + len); \
+        (da) = __temp;                                                  \
+        for (int __i = da_size((da)) - 1; __i > (__idx) + len - 1; __i--) \
+            (da)[__i] = (da)[__i - len];                                \
+        memcpy(&da[(__idx)], (values), len * sizeof(*(da)));            \
     } while (0)
 
-#define array_insert_str(array, index, values) array_insert_many((array), (index), (values), strlen(values))
+#define da_insert_str(da, index, values) da_insert_many((da), (index), (values), strlen(values))
 
-#define array_add_many(array, values, len) do {                         \
-        void* __temp = array_resize_((array), sizeof(*(array)), array_size(array) + (len)); \
-        (array) = __temp;                                               \
-        memcpy(&(array[array_size((array)) - (len)]), (values), (len) * sizeof(*(array))); \
+#define da_add_many(da, values, len) do {                               \
+        void* __temp = da_resize_((da), sizeof(*(da)), da_size(da) + (len)); \
+        (da) = __temp;                                                  \
+        memcpy(&(da[da_size((da)) - (len)]), (values), (len) * sizeof(*(da))); \
     } while (0)
 
-#define array_add_str(array, values) array_add_many((array), (values), strlen(values))
+#define da_add_str(da, values) da_add_many((da), (values), strlen(values))
 
-#define array_resize(array, size) do {                                  \
-        void* __temp = array_resize_((array), sizeof(*(array)), size);  \
-        (array) = __temp;                                               \
+#define da_resize(da, size) do {                                \
+        void* __temp = da_resize_((da), sizeof(*(da)), size);   \
+        (da) = __temp;                                          \
     } while (0)
 
-#define array_add(array, value) do {                                    \
-        void* __temp = array_resize_((array), sizeof(*(array)), -1);    \
-        (array) = __temp;                                               \
-        (array)[array_size((array)) - 1] = value;                       \
+#define da_add(da, value) do {                              \
+        void* __temp = da_resize_((da), sizeof(*(da)), -1); \
+        (da) = __temp;                                      \
+        (da)[da_size((da)) - 1] = value;                    \
     } while (0)
 
-#define array_last(array) (array)[array_size(array) - 1]
+#define da_last(da) (da)[da_size(da) - 1]
 
-#define array_for_all(type__, name__, array__)                          \
-    type__* CONCAT(it__, __LINE__) = array__; type__* CONCAT(end__, __LINE__) = array__ ? array__ + array_size(array__) : NULL; \
+#define da_for_all(type__, name__, da__)                                \
+    type__* CONCAT(it__, __LINE__) = da__; type__* CONCAT(end__, __LINE__) = da__ ? da__ + da_size(da__) : NULL; \
     for (type__* name__; (CONCAT(it__, __LINE__) < CONCAT(end__, __LINE__)) ? (name__ = CONCAT(it__, __LINE__), true) : false; CONCAT(it__, __LINE__)++)
 
-#define array_dump(array, type, name, fmt,  ...) do {                   \
-        array_print(array);                                             \
+#define da_dump(da, type, name, fmt,  ...) do {                         \
+        da_print(da);                                                   \
         fprintf(stderr, "vals: {\n");                                   \
-        type* it__  = (array); type* end__ = (array) ? (array) + array_size(array) : NULL; \
+        type* it__  = (da); type* end__ = (da) ? (da) + da_size(da) : NULL; \
         for (type* name; it__ < end__ ? (name = it__, true) : false; it__++) { \
             fprintf(stderr, "    "fmt",\n", __VA_ARGS__);               \
         }                                                               \
