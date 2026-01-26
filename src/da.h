@@ -1,5 +1,5 @@
-#ifndef ARRAY_H_
-#define ARRAY_H_
+#ifndef DA_H_
+#define DA_H_
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -7,10 +7,11 @@
 typedef struct {
 	size_t size;
 	size_t capacity;
+    Arena* arena;
 	char array[];
 } array_info;
 
-array_info* array_new_(size_t item_size, size_t size);
+array_info* array_create_(size_t item_size, size_t size, Arena* arena);
 void array_print(void* array);
 void array_pop(void* array);
 void* array_resize_(void* array, size_t item_size, size_t size);
@@ -20,10 +21,16 @@ void* array_resize_(void* array, size_t item_size, size_t size);
 
 #define array_clear(array) (((array_info*)(array))[-1].size = 0)
 #define array_size(array) (((array_info*)(array))[-1].size)
-#define array_new(type, size) ((type*)(array_new_(sizeof(type), size)->array))
+#define array_create(type, size) ((type*)(array_create_(sizeof(type), size, NULL)->array))
+#define arena_array_create(arena, type, size) ((type*)(array_create_(sizeof(type), size, arena)->array))
 
-#define array_free(array) do {                  \
+#define array_destroy(array) do {               \
         free(((array_info*)(array)) - 1);       \
+        (array) = NULL;                         \
+    } while (0)
+
+#define array_destroy(array) do {               \
+        arena_free(((array_info*)(array)) - 1); \
         (array) = NULL;                         \
     } while (0)
 
@@ -94,4 +101,4 @@ void* array_resize_(void* array, size_t item_size, size_t size);
         fprintf(stderr, "}\n");                                         \
     } while (0)
 
-#endif // ARRAY_H_
+#endif // DA_H_
