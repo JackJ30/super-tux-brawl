@@ -46,7 +46,7 @@ void* da_resize_(void* da, size_t item_size, size_t size) {
 		info->size = size;
 	}
 	if (info->size >= info->capacity) {
-        size_t oldsz = sizeof(array_info) + (info->capacity * item_size);
+        size_t oldsz = sizeof(da_info) + (info->capacity * item_size);
 		info->capacity = info->size;
 		info->capacity--;
 		info->capacity |= info->capacity >> 1;

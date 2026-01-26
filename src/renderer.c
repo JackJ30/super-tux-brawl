@@ -73,7 +73,7 @@ void render_frame(SDL_Window* window, Camera* cam, State* state) {
         // render entities
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
         SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
-        array_for_all(Entity, e, state->entities) {
+        da_for_all(Entity, e, state->entities) {
             SDL_PushGPUVertexUniformData(cmd, 1, &e->position, sizeof(Vec2));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
         }
