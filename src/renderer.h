@@ -2,6 +2,7 @@
 #define RENDERER_H_
 
 #include "camera.h"
+#include "world.h"
 
 #include <SDL3/SDL_gpu.h>
 
@@ -15,6 +16,6 @@ extern RendererState renderer;
 int renderer_init(SDL_Window* window);
 void renderer_shutdown();
 
-void render_frame(SDL_Window* window, Camera* cam);
+void render_frame(SDL_Window* window, Camera* cam, State* state);
 
 #endif

@@ -18,11 +18,12 @@ array_info* array_create_(size_t item_size, size_t size, Arena* arena) {
 	}
 
 	// make array
+    array_info* info;
     if (arena) {
-        array_info* info = arena_alloc_zero(arena, sizeof(array_info) + item_size * cap, alignof(array_info));
+        info = arena_alloc_zero(arena, sizeof(array_info) + item_size * cap, _Alignof(array_info));
     }
     else {
-        array_info* info = calloc(1, sizeof(array_info) + item_size * cap);
+        info = calloc(1, sizeof(array_info) + item_size * cap);
     }
 	info->size = size;
 	info->arena = arena;
@@ -33,7 +34,7 @@ array_info* array_create_(size_t item_size, size_t size, Arena* arena) {
 void* array_resize_(void* array, size_t item_size, size_t size) {
 	array_info* info = NULL;
 	if (!array) {
-		info = array_create_(item_size, 0);
+		info = array_create_(item_size, 0, NULL);
 	}
 	else {
 		info = ((array_info*)array) - 1;
@@ -45,6 +46,7 @@ void* array_resize_(void* array, size_t item_size, size_t size) {
 		info->size = size;
 	}
 	if (info->size >= info->capacity) {
+        size_t oldsz = sizeof(array_info) + (info->capacity * item_size);
 		info->capacity = info->size;
 		info->capacity--;
 		info->capacity |= info->capacity >> 1;
@@ -54,7 +56,7 @@ void* array_resize_(void* array, size_t item_size, size_t size) {
 		info->capacity |= info->capacity >> 16;
 		info->capacity++;
         if (info->arena) {
-            info = arena_realloc(arena, info, sizeof(array_info) + (info->capacity * item_size), alignof(array_info));
+            info = arena_realloc(info->arena, info, oldsz, sizeof(array_info) + (info->capacity * item_size), _Alignof(array_info));
         }
         else {
             info = realloc(info, sizeof(array_info) + (info->capacity * item_size));

@@ -1,8 +1,11 @@
 #ifndef DA_H_
 #define DA_H_
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#include "arena.h"
 
 typedef struct {
 	size_t size;
@@ -28,11 +31,6 @@ void* array_resize_(void* array, size_t item_size, size_t size);
         array_info* info = &(((array_info*)(array))[-1]);   \
         if (!info->arena) free(((array_info*)(array)) - 1); \
         (array) = NULL;                                     \
-    } while (0)
-
-#define array_destroy(array) do {               \
-        arena_free(((array_info*)(array)) - 1); \
-        (array) = NULL;                         \
     } while (0)
 
 #define array_erase(array, index) do {                                  \

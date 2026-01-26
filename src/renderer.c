@@ -1,4 +1,6 @@
 #include "renderer.h"
+
+#include "da.h"
 #include "gpu_pipeline.h"
 #include "logger.h"
 
@@ -39,7 +41,7 @@ void renderer_shutdown() {
     SDL_DestroyGPUDevice(renderer.gpu);
 }
 
-void render_frame(SDL_Window* window, Camera* cam) {
+void render_frame(SDL_Window* window, Camera* cam, State* state) {
 
     // get render resources
     SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(renderer.gpu);
@@ -68,10 +70,13 @@ void render_frame(SDL_Window* window, Camera* cam) {
         // constants
         Mat4 view = get_ortho_mat(cam);
 
-        // render
-        SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
+        // render entities
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
-        SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
+        SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
+        array_for_all(Entity, e, state->entities) {
+            SDL_PushGPUVertexUniformData(cmd, 1, &e->position, sizeof(Vec2));
+            SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
+        }
 
         // end render pass
         SDL_EndGPURenderPass(render_pass);
