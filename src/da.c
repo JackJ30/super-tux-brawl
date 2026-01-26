@@ -1,7 +1,7 @@
 #include <string.h>
 #include "da.h"
 
-array_info* array_new_(size_t item_size, size_t size) {
+array_info* array_create_(size_t item_size, size_t size, Arena* arena) {
 	// find capacity
 	size_t cap = 8;
 	if (size > cap) {
@@ -18,8 +18,14 @@ array_info* array_new_(size_t item_size, size_t size) {
 	}
 
 	// make array
-	array_info* info = calloc(1, sizeof(array_info) + item_size * cap);
+    if (arena) {
+        array_info* info = arena_alloc_zero(arena, sizeof(array_info) + item_size * cap, alignof(array_info));
+    }
+    else {
+        array_info* info = calloc(1, sizeof(array_info) + item_size * cap);
+    }
 	info->size = size;
+	info->arena = arena;
 	info->capacity = cap;
 	return info;
 }
@@ -27,7 +33,7 @@ array_info* array_new_(size_t item_size, size_t size) {
 void* array_resize_(void* array, size_t item_size, size_t size) {
 	array_info* info = NULL;
 	if (!array) {
-		info = array_new_(item_size, 0);
+		info = array_create_(item_size, 0);
 	}
 	else {
 		info = ((array_info*)array) - 1;
@@ -47,7 +53,12 @@ void* array_resize_(void* array, size_t item_size, size_t size) {
 		info->capacity |= info->capacity >> 8;
 		info->capacity |= info->capacity >> 16;
 		info->capacity++;
-		info = realloc(info, sizeof(array_info) + (info->capacity * item_size));
+        if (info->arena) {
+            info = arena_realloc(arena, info, sizeof(array_info) + (info->capacity * item_size), alignof(array_info));
+        }
+        else {
+            info = realloc(info, sizeof(array_info) + (info->capacity * item_size));
+        }
 	}
 	return info->array;
 }
