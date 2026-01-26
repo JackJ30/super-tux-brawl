@@ -24,9 +24,10 @@ void* array_resize_(void* array, size_t item_size, size_t size);
 #define array_create(type, size) ((type*)(array_create_(sizeof(type), size, NULL)->array))
 #define arena_array_create(arena, type, size) ((type*)(array_create_(sizeof(type), size, arena)->array))
 
-#define array_destroy(array) do {               \
-        free(((array_info*)(array)) - 1);       \
-        (array) = NULL;                         \
+#define array_destroy(array) do {                           \
+        array_info* info = &(((array_info*)(array))[-1]);   \
+        if (!info->arena) free(((array_info*)(array)) - 1); \
+        (array) = NULL;                                     \
     } while (0)
 
 #define array_destroy(array) do {               \
