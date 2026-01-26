@@ -18,6 +18,8 @@
         } slots[num_slots];                         \
     }
 
+#define QUEUE_DEFINE(type, num_slots, name) typedef QUEUE(type, num_slots) name
+
 #define enqueue(queue, item) do {                                       \
         size_t head = atomic_fetch_add_explicit(&(queue.head), 1, memory_order_acq_rel); \
         while ((head / NUM_SLOTS(queue)) * 2 != atomic_load_explicit(&(queue.slots[head % NUM_SLOTS(queue)].turn), memory_order_acquire)) { /* busy-wait */ } \
