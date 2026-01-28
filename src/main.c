@@ -29,24 +29,24 @@ int main() {
                     running = false;
                     continue;
                 }
-                // case SDL_EVENT_KEY_DOWN: {
-                //     switch (e.key.key) {
-                //         case SDLK_O: // opens server
-                //             network_server_create(NETWORK_SERVER_PORT, NETWORK_MAX_CLIENTS);
-                //             break;
-                //         case SDLK_D: // destroy server
-                //             network_server_destroy();
-                //         case SDLK_C: // connects server
-                //             network_client_connect("localhost", NETWORK_SERVER_PORT);
-                //             break;
-                //         case SDLK_W: // send basic packet
-                //             network_client_send_packet("hello");
-                //             break;
-                //         case SDLK_P:
-                //             network_client_disconnect();
-                //             break;
-                //     }
-                }
+            //     case SDL_EVENT_KEY_DOWN: {
+            //         switch (e.key.key) {
+            //             case SDLK_O: // opens server
+            //                 network_server_create(NETWORK_SERVER_PORT, NETWORK_MAX_CLIENTS);
+            //                 break;
+            //             case SDLK_D: // destroy server
+            //                 network_server_destroy();
+            //             case SDLK_C: // connects server
+            //                 network_client_connect("localhost", NETWORK_SERVER_PORT);
+            //                 break;
+            //             case SDLK_W: // send basic packet
+            //                 network_client_send_packet("hello");
+            //                 break;
+            //             case SDLK_P:
+            //                 network_client_disconnect();
+            //                 break;
+            //         }
+            //     }
             }
         }
 
