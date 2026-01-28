@@ -15,6 +15,25 @@ Network Redundancy: 32 packets of history
 Network puts packets on queue
 Simulation/Physics Engine removes packets from queue
 
+Network Layout
+- Different Channels for different data
+    - Input Channel: data on buttons pressed, unreliable
+    - State Channel: current snapshot of all inputs
+        - https://www.ggpo.net/ could help to reduce lag, used in other fighting games
+        - authoritative states sent(interpolated by client to reduce visual issues)
+            - packets hold position, velocity
+    - Event Channel: small channel for information like chat, ui, etc. reliable because
+    its useful info, but not time sensitive
+    - History Buffer: rollback for previous/future states so sent data can be delivered to
+    other used before they reach that visual state in game
+        - lag comes with this, might have render set back 100ms so packet can be recieved by
+        other player so you and the other client are updated at once
+- Have a tick rate for number of packets sent, also data for packets to see if unreliable packet
+should be trashed if old data
+- Security: libsodium useful for protecting data to prevent cheating
+- Network recieves data -> queue and is processed by some engine -> back to all users
+- Client queues data from server -> buffer of packets -> game engine only renders first
+half of the buffer so it has scenes to render without waiting for server
 */
 
 typedef struct {
@@ -49,15 +68,5 @@ b8 network_client_connect(const char* ip, u32 port);
 b8 network_client_disconnect(void);
 b8 network_client_send_packet(const char* data);
 void network_client_poll(void);
-
-
-
-
-// Packet Queue
-// void network_packet_queue_init();
-// b8 network_packet_queue_empty();
-// b8 network_packet_queue_full();
-// b8 network_packet_queue_push();
-// b8 network_packet_queue_pop();
 
 #endif

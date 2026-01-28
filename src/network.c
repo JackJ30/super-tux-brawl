@@ -14,7 +14,6 @@ static b8 enet_init = false;
 i32 network_server_thread(void* data) {
 
     ENetEvent event;
-    log_info("server started on port %d", server.address.host);
 
     SDL_SetAtomicInt(&server.running, 1);
     SDL_SetAtomicInt(&server.packet_counter, 0);
@@ -44,7 +43,7 @@ i32 network_server_thread(void* data) {
                     // sets user info, or rejects them
                     if (slot >= 0) {
                         server.connected_clients[slot] = event.peer;
-                        event.peer->data = (void*)(size_t)slot; 
+                        event.peer->data = (void*)(size_t)slot;
                         log_info("[server] client %d connected from %x:%u",
                             slot, event.peer->address.host, event.peer->address.port
                         );
@@ -61,9 +60,10 @@ i32 network_server_thread(void* data) {
 
                     log_info("[server] packet #%d from client %d on channel %u (%zu bytes): %s",
                             counter, slot, event.channelID,
-                            event.packet->dataLength, event.packet->data);
+                            event.packet->dataLength, event.packet->data
+                    );
 
-                    // Echo back the counter to the client
+                    // Echo back that packet(number) was recieved
                     char response[256];
                     snprintf(response, sizeof(response), "ACK: packet #%d received", counter);
 
