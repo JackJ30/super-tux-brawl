@@ -15,6 +15,7 @@ Network Redundancy: 32 packets of history
 Network puts packets on queue
 Simulation/Physics Engine removes packets from queue
 
+<<<<<<< HEAD
 Network Layout
 - Different Channels for different data
     - Input Channel: data on buttons pressed, unreliable
@@ -34,6 +35,8 @@ should be trashed if old data
 - Network recieves data -> queue and is processed by some engine -> back to all users
 - Client queues data from server -> buffer of packets -> game engine only renders first
 half of the buffer so it has scenes to render without waiting for server
+=======
+>>>>>>> 3a6162a (Finished basic network: can relay information to server, but info isnt)
 */
 
 typedef struct {
@@ -69,36 +72,12 @@ b8 network_client_disconnect(void);
 b8 network_client_send_packet(const char* data);
 void network_client_poll(void);
 
-// NetworkServer* network_server_create(short port);
-// void network_server_destroy(NetworkServer* server);
-// void network_server_poll(NetworkServer* server, int timeout_ms);
-// void network_server_broadcast(NetworkServer* server, int channel, const void* data, int size, int reliable);
-// void network_server_send(NetworkServer* server, int client_id, int channel, const void* data, int size, int reliable);
-//
-// // Client
-// NetworkClient* network_client_create(void);
-// void network_client_destroy(NetworkClient* client);
-// int network_client_connect(NetworkClient* client, const char* host, int port, int timeout_ms);
-// void network_client_disconnect(NetworkClient* client);
-// void network_client_poll(NetworkClient* client, int timeout_ms);
-// void network_client_send(NetworkClient* client, int channel, const void* data, int size, int reliable);
-//
-// // Events
-// typedef enum {
-// 	NETWORK_EVENT_NONE,
-// 	NETWORK_EVENT_CONNECT,
-// 	NETWORK_EVENT_CONNECTDISCONNECT,
-// 	NETWORK_EVENT_CONNECTRECIEVE
-// } NetworkEventType;
-//
-// typedef struct {
-// 	NetworkEventType type;
-// 	int peer_id;
-// 	int channel;
-// 	const void* data;
-// 	int size;
-// } NetworkEvent;
-//
-// int network_next_event(NetworkEvent* out);
+
+// Packet Queue
+// void network_packet_queue_init();
+// b8 network_packet_queue_empty();
+// b8 network_packet_queue_full();
+// b8 network_packet_queue_push();
+// b8 network_packet_queue_pop();
 
 #endif
