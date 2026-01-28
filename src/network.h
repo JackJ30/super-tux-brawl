@@ -16,6 +16,9 @@ Network puts packets on queue
 Simulation/Physics Engine removes packets from queue
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0a70e25 (thoughts on networking and future steps + minimal changes to network code)
 Network Layout
 - Different Channels for different data
     - Input Channel: data on buttons pressed, unreliable
@@ -35,8 +38,11 @@ should be trashed if old data
 - Network recieves data -> queue and is processed by some engine -> back to all users
 - Client queues data from server -> buffer of packets -> game engine only renders first
 half of the buffer so it has scenes to render without waiting for server
+<<<<<<< HEAD
 =======
 >>>>>>> 3a6162a (Finished basic network: can relay information to server, but info isnt)
+=======
+>>>>>>> 0a70e25 (thoughts on networking and future steps + minimal changes to network code)
 */
 
 typedef struct {
@@ -71,13 +77,5 @@ b8 network_client_connect(const char* ip, u32 port);
 b8 network_client_disconnect(void);
 b8 network_client_send_packet(const char* data);
 void network_client_poll(void);
-
-
-// Packet Queue
-// void network_packet_queue_init();
-// b8 network_packet_queue_empty();
-// b8 network_packet_queue_full();
-// b8 network_packet_queue_push();
-// b8 network_packet_queue_pop();
 
 #endif

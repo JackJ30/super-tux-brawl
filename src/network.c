@@ -43,7 +43,7 @@ i32 network_server_thread(void* data) {
                     // sets user info, or rejects them
                     if (slot >= 0) {
                         server.connected_clients[slot] = event.peer;
-                        event.peer->data = (void*)(size_t)slot; 
+                        event.peer->data = (void*)(size_t)slot;
                         log_info("[server] client %d connected from %x:%u",
                             slot, event.peer->address.host, event.peer->address.port
                         );
