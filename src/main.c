@@ -9,7 +9,6 @@
 int main() {
 
     init_tmp();
-    network_init();
 
     if (platform_init() != 0) {
         return 1;
@@ -30,6 +29,24 @@ int main() {
                     running = false;
                     continue;
                 }
+                // case SDL_EVENT_KEY_DOWN: {
+                //     switch (e.key.key) {
+                //         case SDLK_O: // opens server
+                //             network_server_create(NETWORK_SERVER_PORT, NETWORK_MAX_CLIENTS);
+                //             break;
+                //         case SDLK_D: // destroy server
+                //             network_server_destroy();
+                //         case SDLK_C: // connects server
+                //             network_client_connect("localhost", NETWORK_SERVER_PORT);
+                //             break;
+                //         case SDLK_W: // send basic packet
+                //             network_client_send_packet("hello");
+                //             break;
+                //         case SDLK_P:
+                //             network_client_disconnect();
+                //             break;
+                //     }
+                }
             }
         }
 
@@ -40,7 +57,6 @@ int main() {
     }
 
     // cleanup
-    network_uninit();
     renderer_shutdown();
     platform_shutdown();
     shutdown_tmp();
