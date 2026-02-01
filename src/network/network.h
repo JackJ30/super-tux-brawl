@@ -6,7 +6,7 @@
 #define NETWORK_SERVER_PORT 2760
 #define NETWORK_SERVER_POLL_TIMEOUT_MS 100
 
-#include "inc.h"
+#include "../inc.h"
 #include "enet/enet.h"
 #include <SDL3/SDL.h>
 
@@ -15,10 +15,6 @@ Network Redundancy: 32 packets of history
 Network puts packets on queue
 Simulation/Physics Engine removes packets from queue
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 0a70e25 (thoughts on networking and future steps + minimal changes to network code)
 Network Layout
 - Different Channels for different data
     - Input Channel: data on buttons pressed, unreliable
@@ -38,11 +34,9 @@ should be trashed if old data
 - Network recieves data -> queue and is processed by some engine -> back to all users
 - Client queues data from server -> buffer of packets -> game engine only renders first
 half of the buffer so it has scenes to render without waiting for server
-<<<<<<< HEAD
-=======
->>>>>>> 3a6162a (Finished basic network: can relay information to server, but info isnt)
-=======
->>>>>>> 0a70e25 (thoughts on networking and future steps + minimal changes to network code)
+
+client -> server : player inputs
+server -> client : gamestate snapshot(position, health, )
 */
 
 typedef struct {
