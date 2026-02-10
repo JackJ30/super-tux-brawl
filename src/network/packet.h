@@ -24,9 +24,10 @@ typedef struct NetPacket {
 } NetPacket;
 
 // readable format -> compressed network packet
-void packet_serialize(void* data);
+byte* packet_serialize(void* data);
 // compressed network packet -> readable format
 NetPacket* packet_deserialize(const char* data);
+
 void packet_destroy(NetPacket* packet);
 
 #endif

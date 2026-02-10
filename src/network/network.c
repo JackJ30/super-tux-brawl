@@ -1,5 +1,5 @@
 #include "network.h"
-#include "logger.h"
+#include "../logger.h"
 
 /* TODO
 Libsodium - encrypts messages
