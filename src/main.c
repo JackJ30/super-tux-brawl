@@ -1,11 +1,15 @@
 #include <SDL3/SDL.h>
 
 #include "camera.h"
+#include "input.h"
 #include "platform.h"
 #include "inc.h"
 #include "renderer.h"
+#include "logger.h"
 
 int main() {
+
+    /* initialize */
 
     init_tmp();
 
@@ -19,10 +23,17 @@ int main() {
 
     world_init();
 
-    // main loop
+    /* main loop */
     Camera camera = { .scale = 3.0f, .aspect=((float)platform.width / (float)platform.height) };
     b8 running = true;
+	u64 prev_time = SDL_GetTicksNS();
     while (running) {
+
+		// get timestamp
+		u64 time = SDL_GetTicksNS();
+		float dt = (time - prev_time) * 1e-9f;
+		prev_time = time;
+
         // poll event
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -39,7 +50,17 @@ int main() {
             }
         }
 
-        State* new_state = world_sim(0.01f);
+        // scan input
+        Input input = {0};
+        const bool* key_state = SDL_GetKeyboardState(NULL);
+        if (key_state[SDL_SCANCODE_LEFT]) input.direction.x -= 1.0f;
+        if (key_state[SDL_SCANCODE_RIGHT]) input.direction.x += 1.0f;
+        if (key_state[SDL_SCANCODE_C]) input.jump = true;
+
+        // simulate
+        State* new_state = world_sim(dt, &input);
+
+        // render
         render_frame(platform.window, &camera, new_state);
 
         // clear arena

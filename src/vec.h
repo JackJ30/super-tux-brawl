@@ -1,12 +1,14 @@
 #ifndef VEC_H_
 #define VEC_H_
 
+#include "inc.h"
+
 typedef struct {
-    float x, y;
+    f32 x, y;
 } Vec2;
 
 typedef struct {
-    float data[16];
+    f32 data[16];
 } Mat4;
 
 #endif
