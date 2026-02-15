@@ -12,6 +12,7 @@ typedef struct {
 
 typedef struct {
     Entity* entities; // da
+    size owned_entity;
 } State;
 
 void world_init();

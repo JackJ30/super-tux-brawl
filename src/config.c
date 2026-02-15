@@ -1,7 +1,4 @@
 #include "config.h"
-#include "logger.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 Config config = {
     .tick_rate = 60,

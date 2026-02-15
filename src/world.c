@@ -6,8 +6,9 @@ State state = {0};
 
 void world_init() {
     state.entities = da_create(Entity, 2);
-    state.entities[0] = (Entity){ .position = (Vec2){ .x = 0.0f, .y = 0.0f }  };
-    state.entities[1] = (Entity){ .position = (Vec2){ .x = -0.7f, .y = 0.3f } };
+    state.entities[0] = (Entity){ .position = (Vec2){ 0.0f, 0.0f }};
+    state.entities[1] = (Entity){ .position = (Vec2){ -0.7f, 0.3f }};
+    state.owned_entity = 0;
 }
 
 void world_shutdown() {
@@ -20,10 +21,9 @@ State* world_sim(f32 dt, Input* input) {
         Entity* e = &state.entities[i];
 
         // handle player input
-        if (i == 0) {
-            if (input->jump && e->position.y < -0.95f) {
+        if (i == state.owned_entity) {
+            if (input->jump && e->position.y == -1.0f) {
                 e->velocity.y = 5.0f;
-                e->position.y = -0.95f;
             }
             e->velocity.x = input->direction.x * 2.0f;
         }

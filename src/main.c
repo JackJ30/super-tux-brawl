@@ -53,9 +53,9 @@ int main() {
         // scan input
         Input input = {0};
         const bool* key_state = SDL_GetKeyboardState(NULL);
-        if (key_state[SDL_SCANCODE_LEFT]) input.direction.x -= 1.0f;
-        if (key_state[SDL_SCANCODE_RIGHT]) input.direction.x += 1.0f;
-        if (key_state[SDL_SCANCODE_C]) input.jump = true;
+        if (key_state[SDL_SCANCODE_LEFT] || key_state[SDL_SCANCODE_A]) input.direction.x -= 1.0f;
+        if (key_state[SDL_SCANCODE_RIGHT] || key_state[SDL_SCANCODE_D]) input.direction.x += 1.0f;
+        if (key_state[SDL_SCANCODE_C] || key_state[SDL_SCANCODE_SPACE]) input.jump = true;
 
         // simulate
         State* new_state = world_sim(dt, &input);

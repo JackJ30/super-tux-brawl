@@ -23,15 +23,23 @@ int renderer_init(SDL_Window* window) {
         return 1;
     }
 
-    // set up swapchain
-    // todo(jack): vsync setting
-    if (!SDL_SetGPUSwapchainParameters(renderer.gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC)) {
+    /* set up swapchain */
+
+    // find best present mode
+    // todo(jack): vsync setting (not sure which mode or modes vsync should prioritize (it depends on support))
+    SDL_GPUPresentMode present_mode = SDL_GPU_PRESENTMODE_VSYNC;
+    if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_MAILBOX))
+        present_mode = SDL_GPU_PRESENTMODE_MAILBOX;
+    else if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_IMMEDIATE))
+        present_mode = SDL_GPU_PRESENTMODE_IMMEDIATE;
+
+    if (!SDL_SetGPUSwapchainParameters(renderer.gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, present_mode)) {
 		log_err("Failed to set swapchain parameters: %s", SDL_GetError());
         return 1;
     }
 
-    // init pipeline
-    renderer.pipeline = graphics_pipeline_load("quad.vert", "blue.frag", false);
+    /* initialize pipelines */
+    renderer.pipeline = graphics_pipeline_load("quad.vert", "colored.frag", false);
 
     return 0;
 }
@@ -73,8 +81,12 @@ void render_frame(SDL_Window* window, Camera* cam, State* state) {
         // render entities
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
         SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
-        da_for_all(Entity, e, state->entities) {
+        for (size i = 0; i < da_size(state->entities); ++i) {
+            Entity* e = &state->entities[i];
+
             SDL_PushGPUVertexUniformData(cmd, 1, &e->position, sizeof(Vec2));
+            Vec3 color = i == state->owned_entity ? (Vec3){0.0f, 0.2f, 0.5f} : (Vec3){0.5f, 0.2f, 0.2f};
+            SDL_PushGPUFragmentUniformData(cmd, 0, &color, sizeof(Vec3));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
         }
 

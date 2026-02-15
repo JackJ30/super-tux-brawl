@@ -8,6 +8,10 @@ typedef struct {
 } Vec2;
 
 typedef struct {
+    f32 x, y, z;
+} Vec3;
+
+typedef struct {
     f32 data[16];
 } Mat4;
 
