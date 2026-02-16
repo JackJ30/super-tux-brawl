@@ -1,12 +1,12 @@
 #include <SDL3/SDL.h>
 
+#include "util/inc.h"
+#include "util/logger.h"
+#include "net/net.h"
+#include "platform/platform.h"
 #include "camera.h"
 #include "input.h"
-#include "net.h"
-#include "platform.h"
-#include "inc.h"
 #include "renderer.h"
-#include "logger.h"
 
 int main(int argc, char** argv) {
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     while (running) {
 
         // wait for frame availability
-        wait_for_frame(platform.window);
+        PlatformFrameData frame = platform_wait_for_frame();
 
 		// get timestamp
 		u64 time = SDL_GetTicksNS();
@@ -80,8 +80,9 @@ int main(int argc, char** argv) {
         // simulate
         State* new_state = world_sim(dt, &input);
 
-        // render
-        render_frame(&camera, new_state);
+        // render and present
+        render_frame(frame, &camera, new_state);
+        platform_submit_frame(frame);
 
         // clear arena
         reset_tmp();

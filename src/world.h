@@ -1,9 +1,9 @@
 #ifndef WORLD_H_
 #define WORLD_H_
 
-#include "inc.h"
+#include "util/inc.h"
+#include "util/vec.h"
 #include "input.h"
-#include "vec.h"
 
 typedef struct {
     Vec2 position;

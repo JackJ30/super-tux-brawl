@@ -3,7 +3,7 @@
 
 #include <SDL3/SDL_gpu.h>
 
-#include "inc.h"
+#include "util/inc.h"
 
 SDL_GPUShaderFormat get_availale_shader_formats();
 SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragment_path, b8 blend);

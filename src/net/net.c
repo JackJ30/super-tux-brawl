@@ -1,6 +1,6 @@
 #include "net.h"
 
-#include "logger.h"
+#include "util/logger.h"
 #include "enet/enet.h"
 
 struct {
@@ -71,11 +71,13 @@ int net_init(b8 server) {
 
 void net_shutdown() {
     if (net.is_server) {
+
         // disconnect all peers
         for (size i = 0; i < net.host->peerCount; ++i) {
             enet_peer_disconnect(&net.host->peers[i], 0);
         }
         enet_host_flush(net.host);
+        log_info("Disconnected peers.");
 
     } else {
         // disconnect

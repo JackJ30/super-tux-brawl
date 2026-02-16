@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#include "inc.h"
+#include "util/inc.h"
 
 typedef struct {
     u32 tick_rate;

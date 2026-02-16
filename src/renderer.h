@@ -2,21 +2,14 @@
 #define RENDERER_H_
 
 #include "camera.h"
+#include "platform/platform.h"
 #include "world.h"
 
 #include <SDL3/SDL_gpu.h>
 
-typedef struct {
-    SDL_GPUDevice* gpu;
-    SDL_GPUGraphicsPipeline* pipeline;
-} RendererState;
-
-extern RendererState renderer;
-
 int renderer_init(SDL_Window* window);
 void renderer_shutdown();
 
-void wait_for_frame(SDL_Window* window);
-void render_frame(Camera* cam, State* state);
+void render_frame(PlatformFrameData frame, Camera* cam, State* state);
 
 #endif

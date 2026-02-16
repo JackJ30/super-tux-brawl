@@ -1,52 +1,14 @@
 #include "renderer.h"
 
-#include "config.h"
-#include "da.h"
-#include "gpu_pipeline.h"
-#include "logger.h"
+#include "platform/gpu_pipeline.h"
+#include "util/da.h"
+#include "util/logger.h"
 
-RendererState renderer = {0};
-typedef struct {
-    SDL_GPUCommandBuffer* cmd;
-    SDL_GPUTexture* swapchain_texture;
-} FrameData;
-FrameData frame_data = {0};
+struct {
+    SDL_GPUGraphicsPipeline* pipeline;
+} renderer = {0};
 
 int renderer_init(SDL_Window* window) {
-
-    // set up gpu
-    renderer.gpu = SDL_CreateGPUDevice(get_availale_shader_formats(), DEBUG, NULL);
-    if (renderer.gpu == NULL) {
-		log_err("Failed to create SDL GPU: %s", SDL_GetError());
-        return 1;
-    }
-    if (!SDL_SetGPUAllowedFramesInFlight(renderer.gpu, 2)) {
-		log_err("Failed to set frames in flight: %s", SDL_GetError());
-        return 1;
-    }
-    if (!SDL_ClaimWindowForGPUDevice(renderer.gpu, window)) {
-		log_err("Failed to connect gpu to window: %s", SDL_GetError());
-        return 1;
-    }
-
-    /* set up swapchain */
-
-    // find best present mode
-    SDL_GPUPresentMode present_mode = SDL_GPU_PRESENTMODE_VSYNC;
-    if (config.vsync) {
-        // try mailbox if want vsync
-        if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_MAILBOX))
-            present_mode = SDL_GPU_PRESENTMODE_MAILBOX;
-    } else {
-        // try immediate if you don't want vsync
-        if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_IMMEDIATE))
-            present_mode = SDL_GPU_PRESENTMODE_IMMEDIATE;
-    }
-
-    if (!SDL_SetGPUSwapchainParameters(renderer.gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, present_mode)) {
-		log_err("Failed to set swapchain parameters: %s", SDL_GetError());
-        return 1;
-    }
 
     /* initialize pipelines */
     renderer.pipeline = graphics_pipeline_load("quad.vert", "colored.frag", false);
@@ -56,33 +18,18 @@ int renderer_init(SDL_Window* window) {
 
 void renderer_shutdown() {
     graphics_pipeline_destroy(renderer.pipeline);
-    SDL_DestroyGPUDevice(renderer.gpu);
 }
 
-void wait_for_frame(SDL_Window* window) {
-    // get command buffer
-    frame_data = (FrameData){0};
-    frame_data.cmd = SDL_AcquireGPUCommandBuffer(renderer.gpu);
-    if (!frame_data.cmd) {
-        log_err("Failed to acquire command buffer: %s", SDL_GetError());
-    }
-
-    // get swapchain texture
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(frame_data.cmd, window, &frame_data.swapchain_texture, NULL, NULL)) {
-        log_err("Failed to acquire swapchain texture: %s", SDL_GetError());
-    }
-}
-
-void render_frame(Camera* cam, State* state) {
-
-    SDL_GPUCommandBuffer* cmd = frame_data.cmd;
+void render_frame(PlatformFrameData frame, Camera* cam, State* state) {
 
     // render if we can
-    if (frame_data.swapchain_texture != NULL) {
+    if (frame.swapchain_texture != NULL) {
+
+        SDL_GPUCommandBuffer* cmd = frame.cmd;
 
         // render pass
         SDL_GPUColorTargetInfo color_target = {
-            .texture = frame_data.swapchain_texture,
+            .texture = frame.swapchain_texture,
             .load_op = SDL_GPU_LOADOP_CLEAR,
             .store_op = SDL_GPU_STOREOP_STORE,
             .clear_color = (SDL_FColor){ .r = 0.0f, .g = 0.4f, .b = 0.6, .a=1.0f },
@@ -107,10 +54,5 @@ void render_frame(Camera* cam, State* state) {
 
         // end render pass
         SDL_EndGPURenderPass(render_pass);
-    }
-
-    // submit command buffer
-    if (!SDL_SubmitGPUCommandBuffer(cmd)) {
-        log_err("Failed to submit gpu command buffer: %s", SDL_GetError());
     }
 }

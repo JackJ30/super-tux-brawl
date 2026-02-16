@@ -1,9 +1,10 @@
 #include "gpu_pipeline.h"
 
-#include "logger.h"
+#include "util/logger.h"
+#include "util/resource_loader.h"
+
 #include "platform.h"
 #include "renderer.h"
-#include "resource_loader.h"
 
 #include "cjson/cJSON.h"
 #include <string.h>
@@ -40,7 +41,7 @@ SDL_GPUShader* load_shader(char* path) {
     }
 
     // get format properties (picking a format that SDL wants us to give it)
-    SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(renderer.gpu);
+    SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(platform.gpu);
     char* format_name;
     char* format_entrypoint;
     if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
@@ -99,7 +100,7 @@ SDL_GPUShader* load_shader(char* path) {
     };
 
     // create shader
-    SDL_GPUShader* shader = SDL_CreateGPUShader(renderer.gpu, &info);
+    SDL_GPUShader* shader = SDL_CreateGPUShader(platform.gpu, &info);
     if (shader == NULL) {
         log_err("Failed create GPU shader: %s, error: %s", path, SDL_GetError());
         goto err;
@@ -130,7 +131,7 @@ SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragmen
         .target_info = (SDL_GPUGraphicsPipelineTargetInfo){
             .num_color_targets = 1,
             .color_target_descriptions = &(SDL_GPUColorTargetDescription){
-                .format = SDL_GetGPUSwapchainTextureFormat(renderer.gpu, platform.window)
+                .format = SDL_GetGPUSwapchainTextureFormat(platform.gpu, platform.window)
             },
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
@@ -152,17 +153,17 @@ SDL_GPUGraphicsPipeline* graphics_pipeline_load(char* vertex_path, char* fragmen
         };
     }
 
-    SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(renderer.gpu, &info);
+    SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(platform.gpu, &info);
     if (pipeline == NULL) {
         log_err("Failed to create graphics pipeline: %s", SDL_GetError());
         return NULL;
     }
 
-    SDL_ReleaseGPUShader(renderer.gpu, vertex);
-    SDL_ReleaseGPUShader(renderer.gpu, fragment);
+    SDL_ReleaseGPUShader(platform.gpu, vertex);
+    SDL_ReleaseGPUShader(platform.gpu, fragment);
     return pipeline;
 }
 
 void graphics_pipeline_destroy(SDL_GPUGraphicsPipeline* pipeline) {
-    SDL_ReleaseGPUGraphicsPipeline(renderer.gpu, pipeline);
+    SDL_ReleaseGPUGraphicsPipeline(platform.gpu, pipeline);
 }
