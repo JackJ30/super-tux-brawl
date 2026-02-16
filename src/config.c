@@ -2,6 +2,7 @@
 
 Config config = {
     .tick_rate = 60,
+    .vsync = false,
 };
 
 // void config_init(void) {

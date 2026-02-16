@@ -5,6 +5,7 @@
 
 typedef struct {
     u32 tick_rate;
+    b8 vsync;
 } Config;
 
 extern Config config;

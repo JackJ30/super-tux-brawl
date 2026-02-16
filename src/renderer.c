@@ -1,10 +1,16 @@
 #include "renderer.h"
 
+#include "config.h"
 #include "da.h"
 #include "gpu_pipeline.h"
 #include "logger.h"
 
 RendererState renderer = {0};
+typedef struct {
+    SDL_GPUCommandBuffer* cmd;
+    SDL_GPUTexture* swapchain_texture;
+} FrameData;
+FrameData frame_data = {0};
 
 int renderer_init(SDL_Window* window) {
 
@@ -26,12 +32,16 @@ int renderer_init(SDL_Window* window) {
     /* set up swapchain */
 
     // find best present mode
-    // todo(jack): vsync setting (not sure which mode or modes vsync should prioritize (it depends on support))
     SDL_GPUPresentMode present_mode = SDL_GPU_PRESENTMODE_VSYNC;
-    if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_MAILBOX))
-        present_mode = SDL_GPU_PRESENTMODE_MAILBOX;
-    else if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_IMMEDIATE))
-        present_mode = SDL_GPU_PRESENTMODE_IMMEDIATE;
+    if (config.vsync) {
+        // try mailbox if want vsync
+        if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_MAILBOX))
+            present_mode = SDL_GPU_PRESENTMODE_MAILBOX;
+    } else {
+        // try immediate if you don't want vsync
+        if (SDL_WindowSupportsGPUPresentMode(renderer.gpu, window, SDL_GPU_PRESENTMODE_IMMEDIATE))
+            present_mode = SDL_GPU_PRESENTMODE_IMMEDIATE;
+    }
 
     if (!SDL_SetGPUSwapchainParameters(renderer.gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, present_mode)) {
 		log_err("Failed to set swapchain parameters: %s", SDL_GetError());
@@ -49,25 +59,30 @@ void renderer_shutdown() {
     SDL_DestroyGPUDevice(renderer.gpu);
 }
 
-void render_frame(SDL_Window* window, Camera* cam, State* state) {
-
-    // get render resources
-    SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(renderer.gpu);
-    if (!cmd) {
+void wait_for_frame(SDL_Window* window) {
+    // get command buffer
+    frame_data = (FrameData){0};
+    frame_data.cmd = SDL_AcquireGPUCommandBuffer(renderer.gpu);
+    if (!frame_data.cmd) {
         log_err("Failed to acquire command buffer: %s", SDL_GetError());
     }
-    SDL_GPUTexture* swapchain_texture;
-    SDL_WaitAndAcquireGPUSwapchainTexture(cmd, window, &swapchain_texture, NULL, NULL);
-    if (!swapchain_texture) {
+
+    // get swapchain texture
+    if (!SDL_WaitAndAcquireGPUSwapchainTexture(frame_data.cmd, window, &frame_data.swapchain_texture, NULL, NULL)) {
         log_err("Failed to acquire swapchain texture: %s", SDL_GetError());
     }
+}
+
+void render_frame(Camera* cam, State* state) {
+
+    SDL_GPUCommandBuffer* cmd = frame_data.cmd;
 
     // render if we can
-    if (swapchain_texture != NULL) {
+    if (frame_data.swapchain_texture != NULL) {
 
         // render pass
         SDL_GPUColorTargetInfo color_target = {
-            .texture = swapchain_texture,
+            .texture = frame_data.swapchain_texture,
             .load_op = SDL_GPU_LOADOP_CLEAR,
             .store_op = SDL_GPU_STOREOP_STORE,
             .clear_color = (SDL_FColor){ .r = 0.0f, .g = 0.4f, .b = 0.6, .a=1.0f },
@@ -81,11 +96,11 @@ void render_frame(SDL_Window* window, Camera* cam, State* state) {
         // render entities
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
         SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
-        for (size i = 0; i < da_size(state->entities); ++i) {
-            Entity* e = &state->entities[i];
+        for (size i = 0; i < da_size(state->guys); ++i) {
+            Guy* e = &state->guys[i];
 
             SDL_PushGPUVertexUniformData(cmd, 1, &e->position, sizeof(Vec2));
-            Vec3 color = i == state->owned_entity ? (Vec3){0.0f, 0.2f, 0.5f} : (Vec3){0.5f, 0.2f, 0.2f};
+            Vec3 color = i == state->owned_guy ? (Vec3){0.0f, 0.2f, 0.5f} : (Vec3){0.5f, 0.2f, 0.2f};
             SDL_PushGPUFragmentUniformData(cmd, 0, &color, sizeof(Vec3));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
         }

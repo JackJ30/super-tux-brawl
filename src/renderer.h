@@ -16,6 +16,7 @@ extern RendererState renderer;
 int renderer_init(SDL_Window* window);
 void renderer_shutdown();
 
-void render_frame(SDL_Window* window, Camera* cam, State* state);
+void wait_for_frame(SDL_Window* window);
+void render_frame(Camera* cam, State* state);
 
 #endif

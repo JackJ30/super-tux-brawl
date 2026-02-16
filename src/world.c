@@ -5,23 +5,23 @@
 State state = {0};
 
 void world_init() {
-    state.entities = da_create(Entity, 2);
-    state.entities[0] = (Entity){ .position = (Vec2){ 0.0f, 0.0f }};
-    state.entities[1] = (Entity){ .position = (Vec2){ -0.7f, 0.3f }};
-    state.owned_entity = 0;
+    state.guys = da_create(Guy, 2);
+    state.guys[0] = (Guy){ .position = (Vec2){ 0.0f, 0.0f }};
+    state.guys[1] = (Guy){ .position = (Vec2){ -0.7f, 0.3f }};
+    state.owned_guy = 0;
 }
 
 void world_shutdown() {
-    da_destroy(state.entities);
+    da_destroy(state.guys);
 }
 
 State* world_sim(f32 dt, Input* input) {
 
-    for (size i = 0; i < da_size(state.entities); ++i) {
-        Entity* e = &state.entities[i];
+    for (size i = 0; i < da_size(state.guys); ++i) {
+        Guy* e = &state.guys[i];
 
         // handle player input
-        if (i == state.owned_entity) {
+        if (i == state.owned_guy) {
             if (input->jump && e->position.y == -1.0f) {
                 e->velocity.y = 5.0f;
             }

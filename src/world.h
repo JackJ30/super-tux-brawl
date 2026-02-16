@@ -8,11 +8,11 @@
 typedef struct {
     Vec2 position;
     Vec2 velocity;
-} Entity;
+} Guy;
 
 typedef struct {
-    Entity* entities; // da
-    size owned_entity;
+    Guy* guys; // da
+    size owned_guy;
 } State;
 
 void world_init();

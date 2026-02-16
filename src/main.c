@@ -2,18 +2,32 @@
 
 #include "camera.h"
 #include "input.h"
+#include "net.h"
 #include "platform.h"
 #include "inc.h"
 #include "renderer.h"
 #include "logger.h"
 
-int main() {
+int main(int argc, char** argv) {
+
+    /* read args */
+
+    bool server = false;
+    for (size i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--server") == 0) {
+            server = true;
+        }
+    }
 
     /* initialize */
 
     init_tmp();
 
     if (platform_init() != 0) {
+        return 1;
+    }
+
+    if (net_init(server) != 0) {
         return 1;
     }
 
@@ -28,6 +42,9 @@ int main() {
     b8 running = true;
 	u64 prev_time = SDL_GetTicksNS();
     while (running) {
+
+        // wait for frame availability
+        wait_for_frame(platform.window);
 
 		// get timestamp
 		u64 time = SDL_GetTicksNS();
@@ -61,7 +78,7 @@ int main() {
         State* new_state = world_sim(dt, &input);
 
         // render
-        render_frame(platform.window, &camera, new_state);
+        render_frame(&camera, new_state);
 
         // clear arena
         reset_tmp();
@@ -70,6 +87,7 @@ int main() {
     // cleanup
     world_shutdown();
     renderer_shutdown();
+    net_shutdown();
     platform_shutdown();
     shutdown_tmp();
 
