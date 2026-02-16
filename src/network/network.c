@@ -171,6 +171,31 @@ b8 network_server_destroy() {
 }
 
 // ---------- CLIENT ----------
+i32 network_client_thread(void* data) {
+    ENetEvent event;
+    while (!SDL_GetAtomicInt(&client.connected)) {
+        // polls for packets
+        while (enet_host_service(client.client, &event, 0) > 0) {
+            switch (event.type) {
+                case ENET_EVENT_TYPE_RECEIVE:
+                    log_info("[client] received: %s", event.packet->data);
+                    enet_packet_destroy(event.packet);
+                    break;
+
+                case ENET_EVENT_TYPE_DISCONNECT:
+                    log_info("[client] disconnected");
+                    SDL_SetAtomicInt(&client.connected, 0);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    return 0;
+}
+
 b8 network_client_connect(const char* ip, u32 port) {
     if (SDL_GetAtomicInt(&client.connected)) {
         log_warn("network_client_connect already connected");
@@ -215,57 +240,50 @@ b8 network_client_connect(const char* ip, u32 port) {
         event.type == ENET_EVENT_TYPE_CONNECT) {
         log_info("[client] connected to %s:%u", ip, port);
         SDL_SetAtomicInt(&client.connected, 1);
-        return true;
+
+        // Creates client thread to listen for packets
+        client.thread = SDL_CreateThread(network_client_thread, "NetworkCleint", NULL);
     } else {
         log_err("[client] connection to %s:%u failed", ip, port);
         enet_peer_reset(client.peer);
         enet_host_destroy(client.client);
         return false;
     }
+
+    return true;
 }
 
-b8 network_client_send_packet(const char* data) {
+void network_client_send_packet(const NetPacket* data) {
     if (!SDL_GetAtomicInt(&client.connected)) {
         log_warn("network_client_send_packet not connected");
-        return false;
+        return;
     }
+
 
     ENetPacket* packet = enet_packet_create(data, strlen(data) + 1, ENET_PACKET_FLAG_RELIABLE);
     if (enet_peer_send(client.peer, 0, packet) < 0) {
         log_err("[client] failed to send packet");
-        return false;
+        return;
     }
 
     enet_host_flush(client.client);
     log_info("[client] sent packet: %s", data);
-    return true;
 }
 
-void network_client_poll() {
-    if (!SDL_GetAtomicInt(&client.connected)) {
-        return;
+NetPacket* network_client_get_packet(void) {
+    if (!SDL_GetAtomicInt(client.connected)) {
+
+        return NULL;
     }
 
-    ENetEvent event;
-    while (enet_host_service(client.client, &event, 0) > 0) {
-        switch (event.type) {
-            case ENET_EVENT_TYPE_RECEIVE:
-                log_info("[client] received: %s", event.packet->data);
-                enet_packet_destroy(event.packet);
-                break;
+    NetPacket* packet = NULL;
 
-            case ENET_EVENT_TYPE_DISCONNECT:
-                log_info("[client] disconnected");
-                SDL_SetAtomicInt(&client.connected, 0);
-                break;
 
-            default:
-                break;
-        }
-    }
+
+    return packet;
 }
 
-b8 network_client_disconnect() {
+b8 network_client_disconnect(void) {
     if (!SDL_GetAtomicInt(&client.connected)) {
         return false;
     }

@@ -7,6 +7,8 @@
 #define NETWORK_SERVER_POLL_TIMEOUT_MS 100
 
 #include "../inc.h"
+#include "packet.h"
+#include "mcmpq/mcmpq.h"
 #include "enet/enet.h"
 #include <SDL3/SDL.h>
 
@@ -39,6 +41,8 @@ client -> server : player inputs
 server -> client : gamestate snapshot(position, health, )
 */
 
+typedef QUEUE(NetPacket, 128) PacketQueue;
+
 typedef struct {
     // ENet Required Info
     ENetAddress address;
@@ -50,6 +54,8 @@ typedef struct {
     SDL_AtomicInt max_clients;
     SDL_AtomicInt packet_counter;
     ENetPeer* connected_clients[NETWORK_MAX_CLIENTS];
+    // Queue to store packets
+    PacketQueue queue;
 } NetworkServer;
 
 typedef struct {
@@ -57,6 +63,9 @@ typedef struct {
     ENetPeer* peer;
     SDL_AtomicInt running;
     SDL_AtomicInt connected;
+    // stores packets that need to be processed by you
+    SDL_Thread* thread;
+    PacketQueue queue;
 } NetworkClient;
 
 // should have server and client packet
@@ -67,9 +76,12 @@ b8 network_server_create(u32 port, u32 max_client);
 b8 network_server_destroy(void);
 
 // Client
-b8 network_client_connect(const char* ip, u32 port);
+b8 network_client_connect(const char* ip, u32 port); // will create a threaded packet listener
 b8 network_client_disconnect(void);
-b8 network_client_send_packet(const char* data);
-void network_client_poll(void);
+// packet control
+void network_client_send_packet(const NetPacket* data);
+NetPacket* network_client_get_packet(void);
+void network_client_destroy_packet(NetPacket* data); // call after every network_client_poll
 
 #endif
+
