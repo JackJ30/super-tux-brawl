@@ -1,11 +1,11 @@
 #ifndef INPUT_H_
 #define INPUT_H_
 
-#include "util/vec.h"
+#include "util/gmath.h"
 
 typedef struct {
-    Vec2 direction;
-    b8 jump;
+    vec2 direction;
+    b8 jump, swap;
 } Input;
 
 #endif

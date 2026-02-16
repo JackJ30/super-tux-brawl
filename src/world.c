@@ -6,8 +6,8 @@ State state = {0};
 
 void world_init() {
     state.guys = da_create(Guy, 2);
-    state.guys[0] = (Guy){ .position = (Vec2){ 0.0f, 0.0f }};
-    state.guys[1] = (Guy){ .position = (Vec2){ -0.7f, 0.3f }};
+    state.guys[0] = (Guy){ .position = (vec2){ 0.0f, 0.0f }};
+    state.guys[1] = (Guy){ .position = (vec2){ -0.7f, 0.3f }};
     state.owned_guy = 0;
 }
 
@@ -16,6 +16,9 @@ void world_shutdown() {
 }
 
 State* world_sim(f32 dt, Input* input) {
+
+    if (input->swap) state.owned_guy += 1;
+    if (state.owned_guy == da_size(state.guys)) state.owned_guy = 0;
 
     /* update guys */
     for (size i = 0; i < da_size(state.guys); ++i) {

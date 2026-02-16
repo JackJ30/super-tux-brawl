@@ -3,8 +3,17 @@
 
 #include "util/inc.h"
 
-int net_init(b8 server);
-void net_shutdown();
-void net_process();
+static const i32 PORT = 2760;
+static const i32 MAX_PEERS = 32;
+
+/* server */
+int server_init();
+void server_shutdown();
+void server_process();
+
+/* client */
+int client_init();
+void client_shutdown();
+void client_process();
 
 #endif

@@ -2,7 +2,6 @@
 
 #include "platform/gpu_pipeline.h"
 #include "util/da.h"
-#include "util/logger.h"
 
 struct {
     SDL_GPUGraphicsPipeline* pipeline;
@@ -38,7 +37,7 @@ void render_frame(PlatformFrameData frame, Camera* cam, State* state) {
         if (!render_pass) return;
 
         // constants
-        Mat4 view = get_ortho_mat(cam);
+        mat4 view = get_ortho_mat(cam);
 
         // render guys
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
@@ -46,9 +45,9 @@ void render_frame(PlatformFrameData frame, Camera* cam, State* state) {
         for (size i = 0; i < da_size(state->guys); ++i) {
             Guy* g = &state->guys[i];
 
-            SDL_PushGPUVertexUniformData(cmd, 1, &g->position, sizeof(Vec2));
-            Vec3 color = i == state->owned_guy ? (Vec3){0.0f, 0.2f, 0.5f} : (Vec3){0.5f, 0.2f, 0.2f};
-            SDL_PushGPUFragmentUniformData(cmd, 0, &color, sizeof(Vec3));
+            SDL_PushGPUVertexUniformData(cmd, 1, &g->position, sizeof(vec2));
+            vec3 color = i == state->owned_guy ? (vec3){0.0f, 0.2f, 0.5f} : (vec3){0.5f, 0.2f, 0.2f};
+            SDL_PushGPUFragmentUniformData(cmd, 0, &color, sizeof(vec3));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
         }
 

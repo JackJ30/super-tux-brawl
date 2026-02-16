@@ -1,18 +1,18 @@
-#ifndef VEC_H_
-#define VEC_H_
+#ifndef GMATH_H_
+#define GMATH_H_
 
 #include "inc.h"
 
 typedef struct {
     f32 x, y;
-} Vec2;
+} vec2;
 
 typedef struct {
     f32 x, y, z;
-} Vec3;
+} vec3;
 
 typedef struct {
     f32 data[16];
-} Mat4;
+} mat4;
 
 #endif

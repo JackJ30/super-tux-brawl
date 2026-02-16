@@ -27,8 +27,14 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (net_init(server) != 0) {
-        return 1;
+    if (server) {
+        if (server_init() != 0) {
+            return 1;
+        }
+    } else {
+        if (client_init() != 0) {
+            return 1;
+        }
     }
 
     if (renderer_init(platform.window) != 0) {
@@ -52,9 +58,11 @@ int main(int argc, char** argv) {
 		prev_time = time;
 
         // process networking
-        net_process();
+        if (server) server_process();
+        else        client_process();
 
         // poll event
+        Input input = {0};
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -66,12 +74,17 @@ int main(int argc, char** argv) {
                     platform.width = e.window.data1;
                     platform.height = e.window.data2;
                     camera.aspect = (float)platform.width / (float)platform.height;
+                    break;
+                }
+                case SDL_EVENT_KEY_DOWN: {
+                    if (e.key.key == SDLK_Z) {
+                        input.swap = true;
+                    }
                 }
             }
         }
 
         // scan input
-        Input input = {0};
         const bool* key_state = SDL_GetKeyboardState(NULL);
         if (key_state[SDL_SCANCODE_LEFT] || key_state[SDL_SCANCODE_A]) input.direction.x -= 1.0f;
         if (key_state[SDL_SCANCODE_RIGHT] || key_state[SDL_SCANCODE_D]) input.direction.x += 1.0f;
@@ -91,7 +104,8 @@ int main(int argc, char** argv) {
     // cleanup
     world_shutdown();
     renderer_shutdown();
-    net_shutdown();
+    if (server) server_shutdown();
+    else        client_shutdown();
     platform_shutdown();
     shutdown_tmp();
 

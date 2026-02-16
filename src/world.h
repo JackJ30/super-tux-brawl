@@ -2,12 +2,12 @@
 #define WORLD_H_
 
 #include "util/inc.h"
-#include "util/vec.h"
+#include "util/gmath.h"
 #include "input.h"
 
 typedef struct {
-    Vec2 position;
-    Vec2 velocity;
+    vec2 position;
+    vec2 velocity;
 } Guy;
 
 typedef struct {
