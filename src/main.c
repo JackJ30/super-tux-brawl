@@ -51,6 +51,9 @@ int main(int argc, char** argv) {
 		float dt = (time - prev_time) * 1e-9f;
 		prev_time = time;
 
+        // process networking
+        net_process();
+
         // poll event
         SDL_Event e;
         while (SDL_PollEvent(&e)) {

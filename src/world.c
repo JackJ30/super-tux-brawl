@@ -17,25 +17,26 @@ void world_shutdown() {
 
 State* world_sim(f32 dt, Input* input) {
 
+    /* update guys */
     for (size i = 0; i < da_size(state.guys); ++i) {
-        Guy* e = &state.guys[i];
+        Guy* g = &state.guys[i];
 
         // handle player input
         if (i == state.owned_guy) {
-            if (input->jump && e->position.y == -1.0f) {
-                e->velocity.y = 5.0f;
+            if (input->jump && g->position.y == -1.0f) {
+                g->velocity.y = 5.0f;
             }
-            e->velocity.x = input->direction.x * 2.0f;
+            g->velocity.x = input->direction.x * 2.0f;
         }
 
         // semi implicit euler integrator
-        e->velocity.y -= 9.8f * dt;
-        e->position.y += e->velocity.y * dt;
-        e->position.x += e->velocity.x * dt;
+        g->velocity.y -= 9.8f * dt;
+        g->position.y += g->velocity.y * dt;
+        g->position.x += g->velocity.x * dt;
 
         // handle ground
-        if (e->position.y < -1.0f) {
-            e->position.y = -1.0f;
+        if (g->position.y < -1.0f) {
+            g->position.y = -1.0f;
         }
     }
 

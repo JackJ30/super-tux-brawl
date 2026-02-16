@@ -93,13 +93,13 @@ void render_frame(Camera* cam, State* state) {
         // constants
         Mat4 view = get_ortho_mat(cam);
 
-        // render entities
+        // render guys
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
         SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
         for (size i = 0; i < da_size(state->guys); ++i) {
-            Guy* e = &state->guys[i];
+            Guy* g = &state->guys[i];
 
-            SDL_PushGPUVertexUniformData(cmd, 1, &e->position, sizeof(Vec2));
+            SDL_PushGPUVertexUniformData(cmd, 1, &g->position, sizeof(Vec2));
             Vec3 color = i == state->owned_guy ? (Vec3){0.0f, 0.2f, 0.5f} : (Vec3){0.5f, 0.2f, 0.2f};
             SDL_PushGPUFragmentUniformData(cmd, 0, &color, sizeof(Vec3));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
