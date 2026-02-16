@@ -1,6 +1,6 @@
 #include <SDL3/SDL.h>
 
-#include "arena.h"
+#include "camera.h"
 #include "platform.h"
 #include "inc.h"
 #include "renderer.h"
@@ -19,9 +19,10 @@ int main() {
     }
 
     // main loop
+    Camera camera = { .scale = 3.0f, .aspect=1.0f };
     b8 running = true;
     while (running) {
-        // poll events
+        // poll event
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -50,10 +51,13 @@ int main() {
                  //             break;
                  //     }
                  // }
+                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+                    camera.aspect = (float)e.window.data1 / (float)e.window.data2;
+                }
             }
         }
 
-        render_frame(platform.window);
+        render_frame(platform.window, &camera);
 
         // clear arena
         reset_tmp();

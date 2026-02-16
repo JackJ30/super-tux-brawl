@@ -29,7 +29,7 @@ int renderer_init(SDL_Window* window) {
     }
 
     // init pipeline
-    renderer.pipeline = graphics_pipeline_load("fullscreen_world.vert", "blue.frag", false);
+    renderer.pipeline = graphics_pipeline_load("quad.vert", "blue.frag", false);
 
     return 0;
 }
@@ -39,7 +39,7 @@ void renderer_shutdown() {
     SDL_DestroyGPUDevice(renderer.gpu);
 }
 
-void render_frame(SDL_Window* window) {
+void render_frame(SDL_Window* window, Camera* cam) {
 
     // get render resources
     SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(renderer.gpu);
@@ -65,7 +65,11 @@ void render_frame(SDL_Window* window) {
         SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(cmd, &color_target, 1, NULL);
         if (!render_pass) return;
 
+        // constants
+        Mat4 view = get_ortho_mat(cam);
+
         // render
+        SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
         SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
 
