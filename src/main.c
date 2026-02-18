@@ -20,10 +20,6 @@ int main(int argc, char** argv) {
     /* initialize */
     init_tmp();
 
-    if (platform_init() != 0) {
-        return 1;
-    }
-
     if (server) {
         if (server_init() != 0) {
             return 1;
@@ -32,6 +28,10 @@ int main(int argc, char** argv) {
         if (client_init() != 0) {
             return 1;
         }
+    }
+
+    if (platform_init() != 0) {
+        return 1;
     }
 
     if (renderer_init() != 0) {
