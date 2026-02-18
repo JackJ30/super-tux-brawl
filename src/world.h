@@ -3,6 +3,7 @@
 
 #include "util/inc.h"
 #include "util/gmath.h"
+#include "util/da.h"
 #include "input.h"
 
 typedef struct {
@@ -11,7 +12,7 @@ typedef struct {
 } Guy;
 
 typedef struct {
-    Guy* guys; // da
+    DA(Guy) guys;
     size owned_guy;
 } State;
 

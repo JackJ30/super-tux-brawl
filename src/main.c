@@ -10,8 +10,9 @@
 
 int main(int argc, char** argv) {
 
-    /* read args */
+    log_err("test");
 
+    /* read args */
     bool server = false;
     for (size i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--server") == 0) {
@@ -20,7 +21,6 @@ int main(int argc, char** argv) {
     }
 
     /* initialize */
-
     init_tmp();
 
     if (platform_init() != 0) {

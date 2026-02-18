@@ -1,7 +1,5 @@
 #include "world.h"
 
-#include "util/da.h"
-
 State state = {0};
 
 void world_init() {
@@ -17,8 +15,7 @@ void world_shutdown() {
 
 State* world_sim(f32 dt, Input* input) {
 
-    if (input->swap) state.owned_guy += 1;
-    if (state.owned_guy == da_size(state.guys)) state.owned_guy = 0;
+    if (input->swap) state.owned_guy = (state.owned_guy + 1) % da_size(state.guys);
 
     /* update guys */
     for (size i = 0; i < da_size(state.guys); ++i) {

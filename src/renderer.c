@@ -46,7 +46,7 @@ void render_frame(PlatformFrameData frame, Camera* cam, State* state) {
             Guy* g = &state->guys[i];
 
             SDL_PushGPUVertexUniformData(cmd, 1, &g->position, sizeof(vec2));
-            vec3 color = i == state->owned_guy ? (vec3){0.0f, 0.2f, 0.5f} : (vec3){0.5f, 0.2f, 0.2f};
+            vec3 color = (i == state->owned_guy) ? (vec3){0.0f, 0.2f, 0.5f} : (vec3){0.5f, 0.2f, 0.2f};
             SDL_PushGPUFragmentUniformData(cmd, 0, &color, sizeof(vec3));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
         }
