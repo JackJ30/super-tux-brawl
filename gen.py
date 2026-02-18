@@ -137,6 +137,6 @@ for i in [
     writeln(f, f"build shaders-{t}: phony {" ".join(all_shader_outs)}")
     writeln(f, f"build {t}: phony {outputdir}/{binary} shaders-{t}")
 
-writeln(f, f"build shaders: phony shaders-release shaders-debug")
+writeln(f, f"build all: phony release debug")
 writeln(f, f"default debug")
 print("Wrote build.ninja")

@@ -10,8 +10,6 @@
 
 int main(int argc, char** argv) {
 
-    log_err("test");
-
     /* read args */
     bool server = false;
     for (size i = 1; i < argc; ++i) {
