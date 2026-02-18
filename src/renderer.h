@@ -7,9 +7,9 @@
 
 #include <SDL3/SDL_gpu.h>
 
-int renderer_init(SDL_Window* window);
+int renderer_init();
 void renderer_shutdown();
 
-void render_frame(PlatformFrameData frame, Camera* cam, State* state);
+void render_frame(PlatformFrameData frame, Camera cam, State* state);
 
 #endif

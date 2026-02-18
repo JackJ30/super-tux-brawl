@@ -76,6 +76,7 @@ void client_shutdown() {
     enet_host_destroy(client.host);
     enet_deinitialize();
 }
+
 void client_process() {
     ENetEvent e;
     while (enet_host_service(client.host, &e, 0) > 0) {
@@ -101,5 +102,9 @@ void client_process() {
                 break;
         }
     }
+
+}
+
+void client_send_input(Input* input) {
 
 }

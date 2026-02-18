@@ -1,7 +1,6 @@
 #include <SDL3/SDL.h>
 
 #include "util/inc.h"
-#include "util/logger.h"
 #include "net/net.h"
 #include "platform/platform.h"
 #include "camera.h"
@@ -35,7 +34,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (renderer_init(platform.window) != 0) {
+    if (renderer_init() != 0) {
         return 1;
     }
 
@@ -92,7 +91,7 @@ int main(int argc, char** argv) {
         State* new_state = world_sim(dt, &input);
 
         // render and present
-        render_frame(frame, &camera, new_state);
+        render_frame(frame, camera, new_state);
         platform_submit_frame(frame);
 
         // clear arena

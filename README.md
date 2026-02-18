@@ -1,6 +1,11 @@
 # Super Tux Brawl
 Open source fighting game, like smash bros.
 
+# Todo
+- [ ] Naive server authoritative multiplayer implementation
+- [ ] Sprite renderer
+- [ ] Improve networking
+
 # The networking plan
 - https://arstechnica.com/gaming/2019/10/explaining-how-fighting-games-use-delay-based-and-rollback-netcode/
 - https://www.reddit.com/r/gamedev/comments/mbqrnl/how_do_rollback_netcode_works_in_games_that_has/ (rollback vs csp)

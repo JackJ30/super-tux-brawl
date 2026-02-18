@@ -7,7 +7,7 @@ struct {
     SDL_GPUGraphicsPipeline* pipeline;
 } renderer = {0};
 
-int renderer_init(SDL_Window* window) {
+int renderer_init() {
 
     /* initialize pipelines */
     renderer.pipeline = graphics_pipeline_load("quad.vert", "colored.frag", false);
@@ -19,7 +19,7 @@ void renderer_shutdown() {
     graphics_pipeline_destroy(renderer.pipeline);
 }
 
-void render_frame(PlatformFrameData frame, Camera* cam, State* state) {
+void render_frame(PlatformFrameData frame, Camera cam, State* state) {
 
     // render if we can
     if (frame.swapchain_texture != NULL) {
@@ -37,7 +37,7 @@ void render_frame(PlatformFrameData frame, Camera* cam, State* state) {
         if (!render_pass) return;
 
         // constants
-        mat4 view = get_ortho_mat(cam);
+        mat4 view = get_ortho_mat(&cam);
 
         // render guys
         SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);

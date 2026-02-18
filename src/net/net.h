@@ -1,6 +1,7 @@
 #ifndef NET_H_
 #define NET_H_
 
+#include "input.h"
 #include "util/inc.h"
 
 static const i32 PORT = 2760;
@@ -15,5 +16,6 @@ void server_process();
 int client_init();
 void client_shutdown();
 void client_process();
+void client_send_input(Input* input);
 
 #endif

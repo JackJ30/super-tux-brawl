@@ -49,7 +49,7 @@ void server_process() {
                 log_info ("A new client connected from %x:%u.", e.peer->address.host, e.peer->address.port);
 
                 /* Store any relevant client information here. */
-                e.peer -> data = "Client information";
+                e.peer->data = "Client information";
 
                 break;
 
@@ -67,7 +67,6 @@ void server_process() {
 
             case ENET_EVENT_TYPE_DISCONNECT:
                 log_info ("%x:%u disconnected.", e.peer->address.host, e.peer->address.port);
-
 
                 /* Reset the peer's client information. */
                 e.peer -> data = NULL;
