@@ -1,110 +1,128 @@
-#include <SDL3/SDL.h>
+/* This file is responsible for setting up the app, launching services and
+running the client. Detailed explanation below. */
 
 #include "util/inc.h"
-#include "net/net.h"
 #include "platform/platform.h"
-#include "camera.h"
-#include "input.h"
-#include "renderer.h"
+#include "util/logger.h"
 
-int main(int argc, char** argv) {
+#include "net/net.h"
+#include "server.h"
+#include "client.h"
+
+#define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_main.h>
+
+bool is_server = true;
+bool is_client = true;
+
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     /* read args */
-    bool server = false;
     for (size i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--server") == 0) {
-            server = true;
+        if (strcmp(argv[i], "--headless") == 0) {
+            is_client = false;
+            is_server = true;
+        }
+        if (strcmp(argv[i], "--connect") == 0) {
+            is_client = true;
+            is_server = false;
         }
     }
 
     /* initialize */
+
+    // temporary memory
     init_tmp();
 
-    if (server) {
-        if (server_init() != 0) {
-            return 1;
-        }
+    // platform
+    if (platform_init(is_client) != 0) {
+        return SDL_APP_FAILURE;
+    }
+
+    /* setup systems and services */
+
+    // start net
+    net_start(is_server, is_client);
+
+    // start server
+    if (is_server) {
+        log_info("Starting server.");
+        server_start();
+    }
+
+    // initialize client
+    if (is_client) {
+        log_info("Starting client.");
+        client_init();
+    }
+
+    if (!is_server && !is_client) {
+        log_warn("You probably didn't mean to run without client or server.");
+        return SDL_APP_SUCCESS;
+    }
+
+	return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppIterate(void *appstate) {
+
+    if (is_client) {
+
+        /* process and render client */
+        client_process();
+
     } else {
-        if (client_init() != 0) {
-            return 1;
-        }
+        /* if no client, sleep so we don't burn cpu */
+        /* this loop doesn't matter to pure server */
+        SDL_Delay(10); // 10 ms
     }
 
-    if (platform_init() != 0) {
-        return 1;
-    }
+	return SDL_APP_CONTINUE;
+}
 
-    if (renderer_init() != 0) {
-        return 1;
-    }
+SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *e) {
 
-    world_init();
+    /* quit app */
+	if (e->type == SDL_EVENT_QUIT) {
+		return SDL_APP_SUCCESS;
+	}
 
-    /* main loop */
-    Camera camera = { .scale = 3.0f, .aspect=((float)platform.width / (float)platform.height) };
-    b8 running = true;
-	u64 prev_time = SDL_GetTicksNS();
-    while (running) {
+    /* send event to client */
+    client_event(e);
 
-        // wait for frame availability
-        PlatformFrameData frame = platform_wait_for_frame();
+	return SDL_APP_CONTINUE;
+}
 
-		// get timestamp
-		u64 time = SDL_GetTicksNS();
-		float dt = (time - prev_time) * 1e-9f;
-		prev_time = time;
+void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 
-        // process networking
-        if (server) server_process();
-        else        client_process();
+    // cleanup client
+    if (is_client) client_shutdown();
 
-        // poll event
-        Input input = {0};
-        SDL_Event e;
-        while (SDL_PollEvent(&e)) {
-            switch (e.type) {
-                case SDL_EVENT_QUIT: {
-                    running = false;
-                    continue;
-                }
-                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-                    platform.width = e.window.data1;
-                    platform.height = e.window.data2;
-                    camera.aspect = (float)platform.width / (float)platform.height;
-                    break;
-                }
-                case SDL_EVENT_KEY_DOWN: {
-                    if (e.key.key == SDLK_Z) {
-                        input.swap = true;
-                    }
-                }
-            }
-        }
+    // join server
+    if (is_server) server_finish();
 
-        // scan input
-        const bool* key_state = SDL_GetKeyboardState(NULL);
-        if (key_state[SDL_SCANCODE_LEFT] || key_state[SDL_SCANCODE_A]) input.direction.x -= 1.0f;
-        if (key_state[SDL_SCANCODE_RIGHT] || key_state[SDL_SCANCODE_D]) input.direction.x += 1.0f;
-        if (key_state[SDL_SCANCODE_C] || key_state[SDL_SCANCODE_SPACE]) input.jump = true;
+    // join net
+    net_finish();
 
-        // simulate
-        State* new_state = world_sim(dt, &input);
-
-        // render and present
-        render_frame(frame, camera, new_state);
-        platform_submit_frame(frame);
-
-        // clear arena
-        reset_tmp();
-    }
-
-    // cleanup
-    world_shutdown();
-    renderer_shutdown();
-    if (server) server_shutdown();
-    else        client_shutdown();
+    /* shutdown */
     platform_shutdown();
     shutdown_tmp();
-
-    return 0;
 }
+
+// The setup: we will use sdl callbacks.
+
+// There will be a net thread whose job is to recieve net communications and add
+// them to a "net queue".
+
+// If client only, iterate will be used for rendering, and will consult the net
+// thread on state before rendering.
+
+// If server only, iterate will just sleep for a millisecond or so. There will
+// be a server thread which consults the net thread then does server stuff.
+
+// If server and client, iterate will be used for the client as usual. The
+// server thread will be used as usual. The net thread however, will secretly
+// queue the client's events directly onto the server queue.
+
+// All threads who loop will consult a "continue" variable which will be set to
+// false if SDL_Quit is received in the events.

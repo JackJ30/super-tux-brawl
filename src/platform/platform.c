@@ -7,69 +7,79 @@
 
 PlatformState platform = {};
 
-int platform_init() {
+int platform_init(b8 graphics) {
+
+    platform.has_graphics = graphics;
+
+    /* hack to use wayland */
 	for (int i = 0; i < SDL_GetNumVideoDrivers(); ++i) {
 		if (strcmp(SDL_GetVideoDriver(i), "wayland") == 0) {
 			SDL_SetHintWithPriority(SDL_HINT_VIDEO_DRIVER, "wayland", SDL_HINT_OVERRIDE);
 		}
 	}
 
-    // init sdl
-	if (!SDL_Init(SDL_INIT_VIDEO)) {
+    /* init sdl */
+	if (!SDL_Init(graphics ? SDL_INIT_VIDEO : 0)) {
 		log_err("Failed to initialize SDL: %s", SDL_GetError());
         return 1;
 	}
 
-    // create sdl window
-    platform.width = 800;
-    platform.height = 600;
-    platform.window = SDL_CreateWindow("Super Tux Brawl", platform.width, platform.height, SDL_WINDOW_RESIZABLE);
-    if (platform.window == NULL) {
-		log_err("Failed to create SDL window: %s", SDL_GetError());
-        return 1;
-    }
+    /* init sdl graphics */
+    if (platform.has_graphics) {
 
-    /* set up gpu */
+        // create sdl window
+        platform.width = 800;
+        platform.height = 600;
+        platform.window = SDL_CreateWindow("Super Tux Brawl", platform.width, platform.height, SDL_WINDOW_RESIZABLE);
+        if (platform.window == NULL) {
+            log_err("Failed to create SDL window: %s", SDL_GetError());
+            return 1;
+        }
 
-    platform.gpu = SDL_CreateGPUDevice(get_availale_shader_formats(), DEBUG, NULL);
-    if (platform.gpu == NULL) {
-		log_err("Failed to create SDL GPU: %s", SDL_GetError());
-        return 1;
-    }
-    if (!SDL_SetGPUAllowedFramesInFlight(platform.gpu, 2)) {
-		log_err("Failed to set frames in flight: %s", SDL_GetError());
-        return 1;
-    }
-    if (!SDL_ClaimWindowForGPUDevice(platform.gpu, platform.window)) {
-		log_err("Failed to connect gpu to window: %s", SDL_GetError());
-        return 1;
-    }
+        /* set up gpu */
 
-    /* set up swapchain */
+        platform.gpu = SDL_CreateGPUDevice(get_availale_shader_formats(), DEBUG, NULL);
+        if (platform.gpu == NULL) {
+            log_err("Failed to create SDL GPU: %s", SDL_GetError());
+            return 1;
+        }
+        if (!SDL_SetGPUAllowedFramesInFlight(platform.gpu, 2)) {
+            log_err("Failed to set frames in flight: %s", SDL_GetError());
+            return 1;
+        }
+        if (!SDL_ClaimWindowForGPUDevice(platform.gpu, platform.window)) {
+            log_err("Failed to connect gpu to window: %s", SDL_GetError());
+            return 1;
+        }
 
-    // find best present mode
-    SDL_GPUPresentMode present_mode = SDL_GPU_PRESENTMODE_VSYNC;
-    if (config.vsync) {
-        // try mailbox if want vsync
-        if (SDL_WindowSupportsGPUPresentMode(platform.gpu, platform.window, SDL_GPU_PRESENTMODE_MAILBOX))
-            present_mode = SDL_GPU_PRESENTMODE_MAILBOX;
-    } else {
-        // try immediate if you don't want vsync
-        if (SDL_WindowSupportsGPUPresentMode(platform.gpu, platform.window, SDL_GPU_PRESENTMODE_IMMEDIATE))
-            present_mode = SDL_GPU_PRESENTMODE_IMMEDIATE;
-    }
+        /* set up swapchain */
 
-    if (!SDL_SetGPUSwapchainParameters(platform.gpu, platform.window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, present_mode)) {
-		log_err("Failed to set swapchain parameters: %s", SDL_GetError());
-        return 1;
+        // find best present mode
+        SDL_GPUPresentMode present_mode = SDL_GPU_PRESENTMODE_VSYNC;
+        if (config.vsync) {
+            // try mailbox if want vsync
+            if (SDL_WindowSupportsGPUPresentMode(platform.gpu, platform.window, SDL_GPU_PRESENTMODE_MAILBOX))
+                present_mode = SDL_GPU_PRESENTMODE_MAILBOX;
+        } else {
+            // try immediate if you don't want vsync
+            if (SDL_WindowSupportsGPUPresentMode(platform.gpu, platform.window, SDL_GPU_PRESENTMODE_IMMEDIATE))
+                present_mode = SDL_GPU_PRESENTMODE_IMMEDIATE;
+        }
+
+        if (!SDL_SetGPUSwapchainParameters(platform.gpu, platform.window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, present_mode)) {
+            log_err("Failed to set swapchain parameters: %s", SDL_GetError());
+            return 1;
+        }
     }
 
     return 0;
 }
 
 void platform_shutdown() {
-    SDL_DestroyGPUDevice(platform.gpu);
-    SDL_DestroyWindow(platform.window);
+    if (platform.has_graphics) {
+        SDL_DestroyGPUDevice(platform.gpu);
+        SDL_DestroyWindow(platform.window);
+    }
     SDL_Quit();
 }
 

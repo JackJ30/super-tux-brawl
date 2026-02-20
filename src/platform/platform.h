@@ -1,18 +1,26 @@
 #ifndef PLATFORM_H_
 #define PLATFORM_H_
 
+#include "util/inc.h"
+
 #include <SDL3/SDL.h>
 
 typedef struct {
+    b8 has_graphics;
+    // graphics only
     SDL_Window* window;
     SDL_GPUDevice* gpu;
-    int width, height;
+    i32 width, height;
 } PlatformState;
 
 extern PlatformState platform;
 
-int platform_init();
+/* platform */
+
+int platform_init(b8 graphics);
 void platform_shutdown();
+
+/* graphics */
 
 typedef struct {
     SDL_GPUCommandBuffer* cmd;
