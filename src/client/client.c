@@ -1,25 +1,45 @@
+#include "client.h"
+
+#include "client_net.h"
+
+#include "server/server.h"
 #include "state.h"
 #include "camera.h"
 #include "input.h"
 #include "renderer.h"
+#include "util/logger.h"
 
 Input input = {0};
 State state = {0};
 Camera camera = {0};
-u64 prev_time = 0;
 
-int client_init() {
+u64 prev_time = 0;
+b8 running_server = false;
+
+int client_init(b8 self_host) {
+
+    /* start server if self host */
+    if (self_host) {
+        running_server = true;
+        server_start();
+    }
+
+    /* net */
+    client_net_init();
+
     /* renderer */
     if (renderer_init() != 0) {
         return 1;
     }
 
-    /* create state */
+    /* state */
     state.guys = da_create(Guy, 0);
     create_guy(&state);
 
     camera = (Camera){ .scale = 3.0f, .aspect=((float)platform.width / (float)platform.height) };
     prev_time = SDL_GetTicksNS();
+
+    log_info("Client started.");
 
     return 0;
 }
@@ -27,6 +47,11 @@ int client_init() {
 void client_shutdown() {
     da_destroy(state.guys);
     renderer_shutdown();
+    client_net_shutdown();
+
+    if (running_server) {
+        server_finish();
+    }
 }
 
 void client_event(SDL_Event* e) {
@@ -56,6 +81,7 @@ void client_process() {
     prev_time = time;
 
     // process networking
+    client_net_process();
 
     // scan input
     const bool* key_state = SDL_GetKeyboardState(NULL);

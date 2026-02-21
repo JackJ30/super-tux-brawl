@@ -4,7 +4,6 @@
 #include "util/resource_loader.h"
 
 #include "platform.h"
-#include "renderer.h"
 
 #include "cjson/cJSON.h"
 #include <string.h>

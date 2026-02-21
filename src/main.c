@@ -1,31 +1,25 @@
-/* This file is responsible for setting up the app, launching services and
-running the client. Detailed explanation below. */
-
 #include "util/inc.h"
 #include "platform/platform.h"
-#include "util/logger.h"
 
-#include "net/net.h"
-#include "server.h"
-#include "client.h"
+#include "net.h"
+#include "server/server.h"
+#include "client/client.h"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
-bool is_server = true;
-bool is_client = true;
+bool headless = false;
+bool self_host = false;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     /* read args */
     for (size i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--headless") == 0) {
-            is_client = false;
-            is_server = true;
+            headless = true;
         }
-        if (strcmp(argv[i], "--connect") == 0) {
-            is_client = true;
-            is_server = false;
+        if (strcmp(argv[i], "--host") == 0) {
+            self_host = true;
         }
     }
 
@@ -35,30 +29,25 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     init_tmp();
 
     // platform
-    if (platform_init(is_client) != 0) {
+    if (platform_init(!headless) != 0) {
         return SDL_APP_FAILURE;
     }
 
-    /* setup systems and services */
-
-    // start net
-    net_start(is_server, is_client);
-
-    // start server
-    if (is_server) {
-        log_info("Starting server.");
-        server_start();
+    // net
+    if (net_init() != 0) {
+        return SDL_APP_FAILURE;
     }
 
-    // initialize client
-    if (is_client) {
-        log_info("Starting client.");
-        client_init();
-    }
-
-    if (!is_server && !is_client) {
-        log_warn("You probably didn't mean to run without client or server.");
-        return SDL_APP_SUCCESS;
+    if (headless) {
+        // start server if headless
+        if (server_start() != 0) {
+            return SDL_APP_FAILURE;
+        }
+    } else {
+        // init client if not headless
+        if (client_init(self_host) != 0) {
+            return SDL_APP_FAILURE;
+        }
     }
 
 	return SDL_APP_CONTINUE;
@@ -66,8 +55,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
 
-    if (is_client) {
-
+    if (!headless) {
         /* process and render client */
         client_process();
 
@@ -87,24 +75,26 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *e) {
 		return SDL_APP_SUCCESS;
 	}
 
-    /* send event to client */
-    client_event(e);
+    if (!headless) {
+        /* send event to client */
+        client_event(e);
+    }
 
 	return SDL_APP_CONTINUE;
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 
-    // cleanup client
-    if (is_client) client_shutdown();
-
-    // join server
-    if (is_server) server_finish();
-
-    // join net
-    net_finish();
+    if (headless) {
+        // finish server if headless
+        server_finish();
+    } else {
+        // shut down client if not headless
+        client_shutdown();
+    }
 
     /* shutdown */
+    net_shutdown();
     platform_shutdown();
     shutdown_tmp();
 }
