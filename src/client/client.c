@@ -2,12 +2,11 @@
 
 #include "client_net.h"
 
-#include "server/server.h"
 #include "state.h"
 #include "camera.h"
 #include "input.h"
 #include "renderer.h"
-#include "util/logger.h"
+#include "server/server.h"
 
 Input input = {0};
 State state = {0};
@@ -20,12 +19,16 @@ int client_init(b8 self_host) {
 
     /* start server if self host */
     if (self_host) {
+        if (server_start(0) != 0) {
+            return 1;
+        }
         running_server = true;
-        server_start();
     }
 
     /* net */
-    client_net_init();
+    if (client_net_init("localhost", 0) != 0) {
+        return 1;
+    }
 
     /* renderer */
     if (renderer_init() != 0) {
@@ -38,8 +41,6 @@ int client_init(b8 self_host) {
 
     camera = (Camera){ .scale = 3.0f, .aspect=((float)platform.width / (float)platform.height) };
     prev_time = SDL_GetTicksNS();
-
-    log_info("Client started.");
 
     return 0;
 }
