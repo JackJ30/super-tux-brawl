@@ -1,3 +1,4 @@
+#include "util/arena.h"
 #include "util/inc.h"
 #include "platform/platform.h"
 
@@ -5,12 +6,14 @@
 #include "server/server.h"
 #include "client/client.h"
 #include "util/logger.h"
+#include "ui/debug/micro_abstraction.h"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
 bool headless = false;
 bool self_host = false;
+mu_Context* debug_ui_contex = NULL;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -54,6 +57,15 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         }
     }
 
+    // ui
+    r_init(); // init abstraction
+    ArenaMark s = get_scratch_arena(NULL, 0);
+    debug_ui_contex = (mu_Context*)arena_alloc(s.arena, sizeof(mu_Context), 1);
+    mu_init(debug_ui_contex); // init microui librariy
+    // debug_ui_contex->text_width = text_width;
+    // debug_ui_contex->text_height = text_height;
+
+
 	return SDL_APP_CONTINUE;
 }
 
@@ -63,6 +75,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         /* process and render client */
         client_process();
 
+        // debug ui
     } else {
         /* if no client, sleep so we don't burn cpu */
         /* this loop doesn't matter to pure server */
