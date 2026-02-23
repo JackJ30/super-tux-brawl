@@ -6,14 +6,17 @@
 #include "server/server.h"
 #include "client/client.h"
 #include "util/logger.h"
-#include "ui/debug/micro_abstraction.h"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
 bool headless = false;
 bool self_host = false;
-mu_Context* debug_ui_contex = NULL;
+
+#if DEBUG
+#include "ui/debug/debug_ui.h"
+mu_Context* debug_ui_context = NULL;
+#endif
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -58,12 +61,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
 
     // ui
+#if DEBUG
     r_init(); // init abstraction
     ArenaMark s = get_scratch_arena(NULL, 0);
-    debug_ui_contex = (mu_Context*)arena_alloc(s.arena, sizeof(mu_Context), 1);
-    mu_init(debug_ui_contex); // init microui librariy
+    debug_ui_context = (mu_Context*)arena_alloc(s.arena, sizeof(mu_Context), 1);
+    mu_init(debug_ui_context); // init microui librariy
     // debug_ui_contex->text_width = text_width;
     // debug_ui_contex->text_height = text_height;
+#endif
 
 
 	return SDL_APP_CONTINUE;
@@ -75,7 +80,21 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         /* process and render client */
         client_process();
 
+#if DEBUG
         // debug ui
+        debug_ui_process_frame(debug_ui_context);
+        r_clear(mu_color(90, 95, 100, 255));
+        mu_Command* cmd = NULL;
+        while (mu_next_command(debug_ui_context, &cmd)) {
+            switch (cmd->type) {
+                case MU_COMMAND_TEXT: r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color); break;
+                case MU_COMMAND_RECT: r_draw_rect(cmd->rect.rect, cmd->rect.color); break;
+                case MU_COMMAND_ICON: r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color); break;
+                case MU_COMMAND_CLIP: r_set_clip_rect(cmd->clip.rect); break;
+            }
+        }
+        r_present();
+#endif
     } else {
         /* if no client, sleep so we don't burn cpu */
         /* this loop doesn't matter to pure server */
@@ -95,6 +114,32 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *e) {
     if (!headless) {
         /* send event to client */
         client_event(e);
+
+#if DEBUG
+        // debug ui
+
+        switch (e->type) {
+            case SDL_EVENT_MOUSE_MOTION: mu_input_mousemove(debug_ui_context, e->motion.x, e->motion.y); break;
+            case SDL_EVENT_MOUSE_WHEEL: mu_input_scroll(debug_ui_context, 0, e->wheel.y * -30); break;
+            case SDL_EVENT_TEXT_INPUT: mu_input_text(debug_ui_context, e->text.text); break;
+
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
+                int b = button_map[e->button.button & 0xff];
+                if (b && e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) { mu_input_mousedown(debug_ui_context, e->button.x, e->button.y, b); }
+                if (b && e->type ==   SDL_EVENT_MOUSE_BUTTON_UP) { mu_input_mouseup(debug_ui_context, e->button.x, e->button.y, b);   }
+                break;
+            }
+
+            case SDL_EVENT_KEY_DOWN:
+            case SDL_EVENT_KEY_UP: {
+                int c = key_map[e->key.down & 0xff];
+                if (c && e->type == SDL_EVENT_KEY_DOWN) { mu_input_keydown(debug_ui_context, c); }
+                if (c && e->type ==   SDL_EVENT_KEY_UP) { mu_input_keyup(debug_ui_context, c);   }
+                break;
+            }
+        }
+#endif
     }
 
 	return SDL_APP_CONTINUE;
