@@ -1,4 +1,5 @@
 #include "micro_abstraction.h"
+#include <SDL3/SDL_render.h>
 
 void r_init(void) {
 

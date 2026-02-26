@@ -8,6 +8,9 @@
 #include "renderer.h"
 #include "server/server.h"
 
+// ui
+#include "ui/ui_render.h"
+
 Input input = {0};
 State state = {0};
 Camera camera = {0};
@@ -95,6 +98,7 @@ void client_process() {
 
     // render and present
     render_frame(frame, camera, &state);
+    ui_render_frame(frame, &state);
     platform_submit_frame(frame);
 
     // clear arena

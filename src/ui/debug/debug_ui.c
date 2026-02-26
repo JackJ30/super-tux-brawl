@@ -10,6 +10,9 @@ static void write_log(const char *text) {
   logbuf_updated = 1;
 }
 
+/*
+ * copied example from microui
+ */
 void test_window(mu_Context* context) {
     if (mu_begin_window(context, "Log Window", mu_rect(350, 40, 300, 200))) {
         /* output text panel */
