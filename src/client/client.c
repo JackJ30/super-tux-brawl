@@ -97,8 +97,8 @@ void client_process() {
     sim_tick(&state, dt);
 
     // render and present
-    render_frame(frame, camera, &state);
-    ui_render_frame(frame, &state);
+    render_frame(frame, camera, &state); // clears previous render_pass
+    ui_render_frame(frame, camera, &state); // this one loads another gpurenderpass ontop, shoudl be ordered after
     platform_submit_frame(frame);
 
     // clear arena

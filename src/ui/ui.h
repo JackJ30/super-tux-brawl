@@ -6,7 +6,7 @@
 
 #ifdef DEBUG
 #include "debug/debug_ui.h"
-mu_Context* debug_ui_context = NULL;
+mu_Context* debug_ui_context = NULL; // pass this into ui_render.h ui_render_frame(...)
 #endif
 
 

@@ -2,7 +2,6 @@
 #define DEBUG_UI_H_
 
 #include "../../deps/microui/microui.h"
-#include "micro_abstraction.h"
 #include <SDL3/SDL.h>
 
 static const char button_map[256] = {
