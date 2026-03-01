@@ -8,7 +8,8 @@
 #include "atlas.inl"
 
 static mu_Context* debug_ui_context = NULL;
-static SDL_Texture
+static SDL_GPUTexture* atlas_gpu_texture = NULL;
+static SDL_GPUSampler* atlas_sampler = NULL;
 
 // #include "atlas.inl"
 //
@@ -28,7 +29,7 @@ static SDL_Texture
 //     SDL_SetTextureBlendMode(atlas_texture, SDL_BLENDMODE_BLEND);
 // }
 
-void r_init(void) {
+void r_init(SDL_GPUDevice* device) {
     // init microui context
     ArenaMark s = get_scratch_arena(NULL, 0);
     debug_ui_context = (mu_Context*)arena_alloc(s.arena, sizeof(mu_Context), 1);
@@ -36,6 +37,55 @@ void r_init(void) {
     // debug_ui_contex->text_width = text_width;
     // debug_ui_contex->text_height = text_height;
 
+    // init atlas, create texture
+    if (device != NULL) {
+        SDL_GPUTextureCreateInfo tci = {
+            .type   = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+            .width  = ATLAS_WIDTH,   // 128
+            .height = ATLAS_HEIGHT,  // 128
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .usage  = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+        };
+        atlas_gpu_texture = SDL_CreateGPUTexture(device, &tci);
+
+        // upload atlas pixel data via transfer buffer
+        SDL_GPUTransferBufferCreateInfo tbci = {
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size  = ATLAS_WIDTH * ATLAS_HEIGHT * 4,
+        };
+        SDL_GPUTransferBuffer* tb = SDL_CreateGPUTransferBuffer(device, &tbci);
+        void* ptr = SDL_MapGPUTransferBuffer(device, tb, false);
+        memcpy(ptr, atlas_texture, ATLAS_WIDTH * ATLAS_HEIGHT * 4); // atlas_texture[] from atlas.inl
+        SDL_UnmapGPUTransferBuffer(device, tb);
+
+        SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(device);
+        SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+        SDL_GPUTextureTransferInfo src = {
+            .transfer_buffer = tb,
+            .offset = 0,
+        };
+        SDL_GPUTextureRegion dst = {
+            .texture = atlas_gpu_texture,
+            .w = ATLAS_WIDTH,
+            .h = ATLAS_HEIGHT,
+            .d = 1,
+        };
+        SDL_UploadToGPUTexture(cp, &src, &dst, false);
+        SDL_EndGPUCopyPass(cp);
+        SDL_SubmitGPUCommandBuffer(cmd);
+        SDL_ReleaseGPUTransferBuffer(device, tb);
+
+        // nearest neighbor sampler — pixel font looks correct
+        SDL_GPUSamplerCreateInfo sci = {
+            .min_filter = SDL_GPU_FILTER_NEAREST,
+            .mag_filter = SDL_GPU_FILTER_NEAREST,
+            .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+            .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        };
+        atlas_sampler = SDL_CreateGPUSampler(device, &sci);
+    }
 
     // init rect batches
     batch.rects = NULL;
@@ -116,11 +166,49 @@ void r_draw_rect(mu_Rect rect, mu_Color color) {
     };
 }
 
-void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
+// texture helper
+static void push_text_quad(mu_Rect src, int dx, int dy, int dw, int dh, mu_Color color) {
+    if (text_batch.count >= text_batch.capacity) {
+        text_batch.capacity = text_batch.capacity ? text_batch.capacity * 2 : 64;
+        text_batch.quads = realloc(text_batch.quads, sizeof(TextQuad) * text_batch.capacity);
+    }
 
+    float ax = src.x / (float)ATLAS_WIDTH;
+    float ay = src.y / (float)ATLAS_HEIGHT;
+    float bx = (src.x + src.w) / (float)ATLAS_WIDTH;
+    float by = (src.y + src.h) / (float)ATLAS_HEIGHT;
+
+    float r = color.r / 255.0f;
+    float g = color.g / 255.0f;
+    float b = color.b / 255.0f;
+    float a = color.a / 255.0f;
+
+    float x0 = dx, y0 = dy;
+    float x1 = dx + dw, y1 = dy + dh;
+/*
+    text_batch.quads[text_batch.count++] = { .verts = {
+        { x0, y0,  ax, ay,  r, g, b, a },
+        { x1, y0,  bx, ay,  r, g, b, a },
+        { x1, y1,  bx, by,  r, g, b, a },
+        { x0, y1,  ax, by,  r, g, b, a },
+    }};
+    */
 }
-void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
 
+void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
+    int x = pos.x;
+    for (const char* p = text; *p; p++) {
+        mu_Rect src = atlas[ATLAS_FONT + (unsigned char)*p];
+        push_text_quad(src, x, pos.y, src.w, src.h, color);
+        x += src.w;
+    }
+}
+
+void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
+    mu_Rect src = atlas[id];
+    int x = rect.x + (rect.w - src.w) / 2;
+    int y = rect.y + (rect.h - src.h) / 2;
+    push_text_quad(src, x, y, src.w, src.h, color);
 }
 int r_get_text_width(const char *text, int len) {
 

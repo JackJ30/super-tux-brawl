@@ -3,7 +3,7 @@
 
 void ui_init(void) {
 #ifdef DEBUG
-    r_init();
+    r_init(NULL);
 #endif
 }
 

@@ -14,9 +14,24 @@ typedef struct {
     int capacity;
 } MURectBatch;
 
-static MURectBatch batch = {0};
+typedef struct {
+    float x, y;   // position
+    float u, v;   // atlas UV (normalized 0-1)
+    float r, g, b, a;
+} MUTextVertex;
 
-void r_init(void);
+typedef struct {
+    MUTextVertex* quads[4]; // array of quads
+    int count;
+    int capacity;
+    SDL_GPUBuffer* vertex_buffer;
+    SDL_GPUTransferBuffer* transfer_buffer;
+} MUTextBatch;
+
+static MURectBatch batch = {0};
+static MUTextBatch text_batch = {0};
+
+void r_init(SDL_GPUDevice* device);
 void r_uninit(void);
 
 void r_event(SDL_Event* e);
