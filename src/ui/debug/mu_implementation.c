@@ -5,7 +5,28 @@
 #include <SDL3/SDL_render.h>
 #include <stdlib.h>
 
-mu_Context* debug_ui_context = NULL;
+#include "atlas.inl"
+
+static mu_Context* debug_ui_context = NULL;
+static SDL_Texture
+
+// #include "atlas.inl"
+//
+// static SDL_Texture* atlas_texture = NULL; // or whatever your renderer uses
+//
+// void r_init(void) {
+//     // ... your existing init ...
+//
+//     // atlas[] is uint8_t RGBA, 128*128 pixels
+//     // create texture from it — exact API depends on your backend
+//     // SDL_Renderer example:
+//     atlas_texture = SDL_CreateTexture(renderer,
+//         SDL_PIXELFORMAT_RGBA32,
+//         SDL_TEXTUREACCESS_STATIC,
+//         ATLAS_WIDTH, ATLAS_HEIGHT); // 128, 128
+//     SDL_UpdateTexture(atlas_texture, NULL, atlas, ATLAS_WIDTH * 4);
+//     SDL_SetTextureBlendMode(atlas_texture, SDL_BLENDMODE_BLEND);
+// }
 
 void r_init(void) {
     // init microui context
@@ -79,7 +100,7 @@ void r_draw_rect(mu_Rect rect, mu_Color color) {
         batch.rects = malloc(sizeof(MURect));
     }
     if (batch.count >= batch.capacity) {
-        batch.capacity *= 1;
+        batch.capacity *= 2;
         batch.rects = realloc(batch.rects, sizeof(MURect) * batch.capacity);
     }
 
