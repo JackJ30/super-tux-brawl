@@ -1,15 +1,27 @@
 #version 450
 
-layout(set = 1, binding = 1) uniform EntityInfo
+layout(set = 1, binding = 0) uniform View
 {
-    vec4 xywh;  // x, y, width, height
+    mat4 view;
 };
+
+layout(set = 3, binding = 0) uniform EntityInfo
+{
+    vec4 xywh; // x, y, width, height
+};
+
+const vec2 QUAD_POSITIONS[6] = vec2[](
+    vec2(0.0, 0.0),
+    vec2(1.0, 0.0),
+    vec2(1.0, 1.0),
+    vec2(0.0, 0.0),
+    vec2(1.0, 1.0),
+    vec2(0.0, 1.0)
+);
 
 void main()
 {
-    uint vert = uint(gl_VertexIndex);
-    vec2 pos = positions[vert];           // -1 to 1 unit quad
-    vec2 scaled = pos * 0.5 + 0.5;       // remap to 0..1
-    vec2 world = xywh.xy + scaled * xywh.zw;  // place at x,y with size w,h
-    gl_Position = view * vec4(world, 0.0f, 1.0f);
+    vec2 local = QUAD_POSITIONS[gl_VertexIndex];
+    vec2 world = xywh.xy + local * xywh.zw;
+    gl_Position = view * vec4(world, 0.0, 1.0);
 }

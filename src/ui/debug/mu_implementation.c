@@ -1,48 +1,22 @@
 #include "mu_implementation.h"
-#include "platform/gpu_pipeline.h"
+#include "util/arena.h"
+#include "debug_ui.h"
+
 #include <SDL3/SDL_render.h>
 #include <stdlib.h>
 
-/*
-
-if (frame.swapchain_texture != NULL) {
-    SDL_GPUCommandBuffer* cmd = frame.cmd;
-
-    SDL_GPUColorTargetInfo color_target = {
-        .texture    = frame.swapchain_texture,
-        .load_op    = SDL_GPU_LOADOP_CLEAR,
-        .store_op   = SDL_GPU_STOREOP_STORE,
-        .clear_color = (SDL_FColor){ 0.0f, 0.4f, 0.6f, 1.0f },
-    };
-
-    SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(cmd, &color_target, 1, NULL);
-    if (!render_pass) return;
-
-    mat4 view = get_ortho_mat(&cam);
-
-    SDL_BindGPUGraphicsPipeline(render_pass, renderer.pipeline);
-    SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
-
-    for (int i = 0; i < batch.count; i++) {
-        Rect* rect = &batch.rects[i];
-
-        // pack x,y,w,h into a vec4 for the vertex shader
-        float xywh[4] = { rect->x, rect->y, rect->w, rect->h };
-        float color[4] = { rect->r, rect->g, rect->b, rect->a };
-
-        SDL_PushGPUVertexUniformData(cmd, 1, xywh,  sizeof(xywh));
-        SDL_PushGPUFragmentUniformData(cmd, 0, color, sizeof(color));
-        SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
-    }
-
-    SDL_EndGPURenderPass(render_pass);
-
-    // clear for next frame
-    batch_clear();
-}
- */
+mu_Context* debug_ui_context = NULL;
 
 void r_init(void) {
+    // init microui context
+    ArenaMark s = get_scratch_arena(NULL, 0);
+    debug_ui_context = (mu_Context*)arena_alloc(s.arena, sizeof(mu_Context), 1);
+    mu_init(debug_ui_context); // init microui librariy
+    // debug_ui_contex->text_width = text_width;
+    // debug_ui_contex->text_height = text_height;
+
+
+    // init rect batches
     batch.rects = NULL;
     batch.count = 0;
     batch.capacity = 1;
@@ -53,6 +27,45 @@ void r_uninit(void){
         free(batch.rects);
     batch.count = 0;
     batch.capacity = 0;
+}
+
+void r_event(SDL_Event* e) {
+    switch (e->type) {
+        case SDL_EVENT_MOUSE_MOTION: mu_input_mousemove(debug_ui_context, e->motion.x, e->motion.y); break;
+        case SDL_EVENT_MOUSE_WHEEL: mu_input_scroll(debug_ui_context, 0, e->wheel.y * -30); break;
+        case SDL_EVENT_TEXT_INPUT: mu_input_text(debug_ui_context, e->text.text); break;
+
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            int b = button_map[e->button.button & 0xff];
+            if (b && e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) { mu_input_mousedown(debug_ui_context, e->button.x, e->button.y, b); }
+            if (b && e->type ==   SDL_EVENT_MOUSE_BUTTON_UP) { mu_input_mouseup(debug_ui_context, e->button.x, e->button.y, b);   }
+            break;
+        }
+
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP: {
+            int c = key_map[e->key.down & 0xff];
+            if (c && e->type == SDL_EVENT_KEY_DOWN) { mu_input_keydown(debug_ui_context, c); }
+            if (c && e->type ==   SDL_EVENT_KEY_UP) { mu_input_keyup(debug_ui_context, c);   }
+            break;
+        }
+    }
+}
+
+void r_load_frame(void) {
+    // processes and executes all calls to microui create objs
+    debug_ui_process_frame(debug_ui_context);
+    r_clear(mu_color(90, 95, 100, 255));
+    mu_Command* cmd = NULL;
+    while (mu_next_command(debug_ui_context, &cmd)) {
+        switch (cmd->type) {
+            case MU_COMMAND_TEXT: r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color); break;
+            case MU_COMMAND_RECT: r_draw_rect(cmd->rect.rect, cmd->rect.color); break;
+            case MU_COMMAND_ICON: r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color); break;
+            case MU_COMMAND_CLIP: r_set_clip_rect(cmd->clip.rect); break;
+        }
+    }
 }
 
 void r_clear_batch(void) {

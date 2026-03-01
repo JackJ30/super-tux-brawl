@@ -1,41 +1,23 @@
 #include "ui_render.h"
 #include "../platform/gpu_pipeline.h"
-#include "debug/debug_ui.h"
 #include "debug/mu_implementation.h"
 
-#ifdef DEBUG
-    mu_Context* debug_ui_context;
-#endif
-
 struct {
-    SDL_GPUGraphicsPipeline* pipeline;
+    SDL_GPUGraphicsPipeline* debug_ui_pipeline; // this pipeline just has the shaders for debug_ui
 } ui_renderer = {0};
 
-void ui_render_init(mu_Context* debug_ui_context) {
-    debug_ui_context = NULL;
-    ui_renderer.pipeline = graphics_pipeline_load("custom_quad.vert.glsl", "colored.frag.glsl", false);
-}
-void ui_render_uninit(void) {
-    graphics_pipeline_destroy(ui_renderer.pipeline);
+void ui_render_init(void) {
+#ifdef DEBUG
+    ui_renderer.debug_ui_pipeline = graphics_pipeline_load("custom_quad.vert.glsl", "colored.frag.glsl", false);
+#else
+    ui_render.debug_ui_pipeline = NULL;
+#endif
 }
 
 void ui_render_frame(PlatformFrameData frame, Camera cam, State* state) {
-#ifdef DEBUG
-    // debug ui
-    debug_ui_process_frame(debug_ui_context);
-    r_clear(mu_color(90, 95, 100, 255));
-    mu_Command* cmd = NULL;
-    while (mu_next_command(debug_ui_context, &cmd)) {
-        switch (cmd->type) {
-            case MU_COMMAND_TEXT: r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color); break;
-            case MU_COMMAND_RECT: r_draw_rect(cmd->rect.rect, cmd->rect.color); break;
-            case MU_COMMAND_ICON: r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color); break;
-            case MU_COMMAND_CLIP: r_set_clip_rect(cmd->clip.rect); break;
-        }
-    }
-
-    // now goes to render everything
+    // starts loading everything for gpu
     if (frame.swapchain_texture != NULL) {
+        // gpu spec init
         SDL_GPUCommandBuffer* cmd = frame.cmd;
 
         SDL_GPUColorTargetInfo color_target = {
@@ -48,9 +30,14 @@ void ui_render_frame(PlatformFrameData frame, Camera cam, State* state) {
         SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(cmd, &color_target, 1, NULL);
         if (!render_pass) return;
 
+        // world camera for shaders
         mat4 view = get_ortho_mat(&cam);
 
-        SDL_BindGPUGraphicsPipeline(render_pass, ui_renderer.pipeline);
+#ifdef DEBUG
+        r_load_frame();
+
+        // debug ui render pass
+        SDL_BindGPUGraphicsPipeline(render_pass, ui_renderer.debug_ui_pipeline);
         SDL_PushGPUVertexUniformData(cmd, 0, &view, sizeof(view));
 
         for (int i = 0; i < batch.count; i++) {
@@ -60,17 +47,18 @@ void ui_render_frame(PlatformFrameData frame, Camera cam, State* state) {
             float xywh[4] = { rect->x, rect->y, rect->w, rect->h };
             float color[3] = { rect->r, rect->g, rect->b };
 
+            // pushes everything to shaders to be rendered
             SDL_PushGPUVertexUniformData(cmd, 1, xywh,  sizeof(xywh));
             SDL_PushGPUFragmentUniformData(cmd, 0, color, sizeof(color));
             SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
         }
 
-        SDL_EndGPURenderPass(render_pass);
-
-        // clear for next frame
+        // clears current debug ui frame for next run
         r_clear_batch();
-    }
 #endif
+
+        SDL_EndGPURenderPass(render_pass);
+    }
 
 }
 

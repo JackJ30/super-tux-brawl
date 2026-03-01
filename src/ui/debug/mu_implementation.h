@@ -1,7 +1,7 @@
-#ifndef MU_IMPLEMENTATION_
-#define MU_IMPLEMENTATION_
+#ifdef DEBUG
 
 #include "../../deps/microui/microui.h"
+#include <SDL3/SDL.h>
 
 typedef struct {
    float x, y, w, h;
@@ -18,8 +18,14 @@ static MURectBatch batch = {0};
 
 void r_init(void);
 void r_uninit(void);
+
+void r_event(SDL_Event* e);
+
+void r_load_frame(void);
 void r_clear_batch(void);
 void r_draw_rect(mu_Rect rect, mu_Color color);
+
+// todo
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color);
 void r_draw_icon(int id, mu_Rect rect, mu_Color color);
 int r_get_text_width(const char *text, int len);
